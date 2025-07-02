@@ -1,0 +1,110 @@
+[
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/DiscreteLIPDynamics.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/DiscreteLIPDynamics.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/DiscreteLIPDynamics.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/DiscreteLIPDynamics.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/DoubleSupportConfiguration.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/DoubleSupportConfiguration.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/DoubleSupportConfiguration.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/DoubleSupportConfiguration.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/FootstepPlanElement.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/FootstepPlanElement.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/FootstepPlanElement.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/FootstepPlanElement.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/ISMPC.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/ISMPC.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/ISMPC.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/ISMPC.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/JsonConverter.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/JsonConverter.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/JsonConverter.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/JsonConverter.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/LIPSimulator.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/LIPSimulator.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/LIPSimulator.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/LIPSimulator.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/LIPState.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/LIPState.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/JointCommand.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/JointCommand.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/JointCommand.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/JointCommand.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/JointState.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/JointState.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/JointState.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/JointState.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/RobotState.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/RobotState.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/SE3.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/SE3.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/utils.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/utils.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/WalkingData.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/WalkingData.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/WalkingManager.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/WalkingManager.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/WalkingState.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/WalkingState.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/WholeBodyController.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/WholeBodyController.cpp",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -DmjUSEPLATFORMSIMD -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/main.dir/main.cpp.o -c /home/rum/Sapienza/Excelent/mpc/main.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/main.cpp",
+  "output": "CMakeFiles/main.dir/main.cpp.o"
+},
+{
+  "directory": "/home/rum/Sapienza/Excelent/mpc/build",
+  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -std=gnu++17 -o CMakeFiles/lip_simulator_main.dir/lip_simulator_main.cpp.o -c /home/rum/Sapienza/Excelent/mpc/lip_simulator_main.cpp",
+  "file": "/home/rum/Sapienza/Excelent/mpc/lip_simulator_main.cpp",
+  "output": "CMakeFiles/lip_simulator_main.dir/lip_simulator_main.cpp.o"
+}
+]
