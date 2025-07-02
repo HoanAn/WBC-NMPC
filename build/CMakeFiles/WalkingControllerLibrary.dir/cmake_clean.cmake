@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/WalkingControllerLibrary.dir/src/DiscreteLIPDynamics.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/DiscreteLIPDynamics.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/DoubleSupportConfiguration.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/DoubleSupportConfiguration.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/FootstepPlanElement.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/FootstepPlanElement.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/ISMPC.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/ISMPC.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JointCommand.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JointCommand.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JointState.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JointState.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JsonConverter.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/JsonConverter.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/LIPSimulator.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/LIPSimulator.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o.d"
+  "libWalkingControllerLibrary.a"
+  "libWalkingControllerLibrary.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/WalkingControllerLibrary.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
