@@ -155,6 +155,19 @@ lip_simulator_main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lip_simulator_main.dir/build.make CMakeFiles/lip_simulator_main.dir/build
 .PHONY : lip_simulator_main/fast
 
+#=============================================================================
+# Target rules for targets named test
+
+# Build rule for target.
+test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test
+.PHONY : test
+
+# fast build rule for target.
+test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
+.PHONY : test/fast
+
 lip_simulator_main.o: lip_simulator_main.cpp.o
 .PHONY : lip_simulator_main.o
 
@@ -467,6 +480,30 @@ src/SE3.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.s
 .PHONY : src/SE3.cpp.s
 
+src/WBNMPC.o: src/WBNMPC.cpp.o
+.PHONY : src/WBNMPC.o
+
+# target to build an object file
+src/WBNMPC.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o
+.PHONY : src/WBNMPC.cpp.o
+
+src/WBNMPC.i: src/WBNMPC.cpp.i
+.PHONY : src/WBNMPC.i
+
+# target to preprocess a source file
+src/WBNMPC.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.i
+.PHONY : src/WBNMPC.cpp.i
+
+src/WBNMPC.s: src/WBNMPC.cpp.s
+.PHONY : src/WBNMPC.s
+
+# target to generate assembly for a file
+src/WBNMPC.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.s
+.PHONY : src/WBNMPC.cpp.s
+
 src/WalkingData.o: src/WalkingData.cpp.o
 .PHONY : src/WalkingData.o
 
@@ -587,6 +624,30 @@ src/utils.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.s
 .PHONY : src/utils.cpp.s
 
+test.o: test.cpp.o
+.PHONY : test.o
+
+# target to build an object file
+test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.o
+.PHONY : test.cpp.o
+
+test.i: test.cpp.i
+.PHONY : test.i
+
+# target to preprocess a source file
+test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.i
+.PHONY : test.cpp.i
+
+test.s: test.cpp.s
+.PHONY : test.s
+
+# target to generate assembly for a file
+test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.s
+.PHONY : test.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -598,6 +659,7 @@ help:
 	@echo "... WalkingControllerLibrary"
 	@echo "... lip_simulator_main"
 	@echo "... main"
+	@echo "... test"
 	@echo "... lip_simulator_main.o"
 	@echo "... lip_simulator_main.i"
 	@echo "... lip_simulator_main.s"
@@ -637,6 +699,9 @@ help:
 	@echo "... src/SE3.o"
 	@echo "... src/SE3.i"
 	@echo "... src/SE3.s"
+	@echo "... src/WBNMPC.o"
+	@echo "... src/WBNMPC.i"
+	@echo "... src/WBNMPC.s"
 	@echo "... src/WalkingData.o"
 	@echo "... src/WalkingData.i"
 	@echo "... src/WalkingData.s"
@@ -652,6 +717,9 @@ help:
 	@echo "... src/utils.o"
 	@echo "... src/utils.i"
 	@echo "... src/utils.s"
+	@echo "... test.o"
+	@echo "... test.i"
+	@echo "... test.s"
 .PHONY : help
 
 

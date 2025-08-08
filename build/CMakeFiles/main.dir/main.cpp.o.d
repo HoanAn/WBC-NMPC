@@ -29,6 +29,8 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar2-decl.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar2.h \
  /usr/include/c++/13/exception /usr/include/c++/13/bits/exception.h \
  /usr/include/c++/13/bits/exception_ptr.h \
  /usr/include/c++/13/bits/exception_defines.h \
@@ -117,16 +119,22 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /usr/include/x86_64-linux-gnu/sys/select.h \
  /usr/include/x86_64-linux-gnu/bits/select.h \
  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
- /usr/include/alloca.h /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/x86_64-linux-gnu/bits/select2.h \
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h /usr/include/alloca.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h \
  /usr/include/c++/13/bits/std_abs.h /usr/include/c++/13/cstdio \
  /usr/include/stdio.h /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
- /usr/include/c++/13/cerrno /usr/include/errno.h \
- /usr/include/x86_64-linux-gnu/bits/errno.h /usr/include/linux/errno.h \
- /usr/include/x86_64-linux-gnu/asm/errno.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h /usr/include/c++/13/cerrno \
+ /usr/include/errno.h /usr/include/x86_64-linux-gnu/bits/errno.h \
+ /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
  /usr/include/c++/13/bits/charconv.h \
@@ -218,7 +226,10 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /usr/include/c++/13/bits/stl_heap.h \
  /usr/include/c++/13/bits/uniform_int_dist.h \
  /usr/include/c++/13/bits/stl_tempbuf.h /usr/include/c++/13/cstring \
- /usr/include/string.h /usr/include/strings.h /usr/include/c++/13/climits \
+ /usr/include/string.h /usr/include/strings.h \
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
+ /usr/include/c++/13/climits \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
  /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
@@ -373,6 +384,8 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
+ /usr/include/x86_64-linux-gnu/bits/unistd.h \
+ /usr/include/x86_64-linux-gnu/bits/unistd-decl.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
  /usr/include/linux/close_range.h \
  /usr/include/boost/config/detail/select_platform_config.hpp \
@@ -2143,6 +2156,154 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /opt/openrobots/include/pinocchio/parsers/config.hpp \
  /usr/include/c++/13/iostream \
  /opt/openrobots/include/pinocchio/parsers/urdf/geometry.hxx \
+ /opt/openrobots/include/pinocchio/autodiff/casadi.hpp \
+ /opt/openrobots/include/casadi/casadi.hpp \
+ /opt/openrobots/include/casadi/core/core.hpp \
+ /opt/openrobots/include/casadi/core/sx_elem.hpp \
+ /opt/openrobots/include/casadi/core/printable.hpp \
+ /opt/openrobots/include/casadi/core/casadi_common.hpp \
+ /opt/openrobots/include/casadi/core/casadi_types.hpp \
+ /opt/openrobots/include/casadi/core/casadi_logger.hpp \
+ /opt/openrobots/include/casadi/core/casadi_export.h \
+ /opt/openrobots/include/casadi/core/exception.hpp \
+ /opt/openrobots/include/casadi/core/casadi_limits.hpp \
+ /opt/openrobots/include/casadi/core/matrix_fwd.hpp \
+ /opt/openrobots/include/casadi/core/casadi_misc.hpp \
+ /opt/openrobots/include/casadi/core/generic_expression.hpp \
+ /opt/openrobots/include/casadi/core/calculus.hpp \
+ /opt/openrobots/include/casadi/core/serializing_stream.hpp \
+ /opt/openrobots/include/casadi/core/polynomial.hpp \
+ /opt/openrobots/include/casadi/core/global_options.hpp \
+ /opt/openrobots/include/casadi/core/casadi_common.hpp \
+ /opt/openrobots/include/casadi/core/casadi_meta.hpp \
+ /opt/openrobots/include/casadi/core/sx.hpp \
+ /opt/openrobots/include/casadi/core/sx_fwd.hpp \
+ /opt/openrobots/include/casadi/core/matrix_decl.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_runtime.hpp \
+ /opt/openrobots/include/casadi/core/calculus.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_copy.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_cvx.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_swap.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_project.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_tri_project.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_densify.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_sparsify.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_scal.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_iamax.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_axpy.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_dot.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_kron.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_clear.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_clip_max.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_clip_min.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_fill.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_max_viol.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_mmin.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_mmax.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_vfmin.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_vfmax.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_vector_fmin.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_vector_fmax.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_sum_viol.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_mtimes.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_mv.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_trilsolve.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_triusolve.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_trans.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_norm_1.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_norm_2.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_norm_inf.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_masked_norm_inf.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_norm_inf_mul.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_bilin.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_rank1.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_low.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_flip.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_polyval.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_de_boor.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_nd_boor_eval.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_nd_boor_dual_eval.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_interpn_weights.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_interpn_interpolate.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_interpn.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_interpn_grad.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_mv_dense.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_finite_diff.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_file_slurp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_ldl.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_qr.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_qp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_qrqp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_kkt.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_ipqp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_oracle.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_nlp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_sqpmethod.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_feasiblesqpmethod.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_bfgs.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_regularize.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_newton.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_bound_consistency.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_lsqr.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_dense_lsqr.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_cache.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_convexify.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_logsumexp.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_sum.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_sparsity.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_jac.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_oracle_callback.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_ocp_block.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_scaled_copy.hpp \
+ /opt/openrobots/include/casadi/core/generic_matrix.hpp \
+ /opt/openrobots/include/casadi/core/slice.hpp \
+ /opt/openrobots/include/casadi/core/generic_type.hpp \
+ /opt/openrobots/include/casadi/core/shared_object.hpp \
+ /opt/openrobots/include/casadi/core/submatrix.hpp \
+ /opt/openrobots/include/casadi/core/nonzeros.hpp \
+ /opt/openrobots/include/casadi/core/sparsity.hpp \
+ /opt/openrobots/include/casadi/core/sparsity_interface.hpp \
+ /opt/openrobots/include/casadi/core/dm.hpp \
+ /opt/openrobots/include/casadi/core/dm_fwd.hpp \
+ /opt/openrobots/include/casadi/core/im.hpp \
+ /opt/openrobots/include/casadi/core/im_fwd.hpp \
+ /opt/openrobots/include/casadi/core/mx.hpp \
+ /opt/openrobots/include/casadi/core/code_generator.hpp \
+ /opt/openrobots/include/casadi/core/function.hpp \
+ /usr/include/c++/13/stack /usr/include/c++/13/deque \
+ /usr/include/c++/13/bits/stl_deque.h /usr/include/c++/13/bits/deque.tcc \
+ /usr/include/c++/13/bits/stl_stack.h \
+ /opt/openrobots/include/casadi/core/casadi_interrupt.hpp \
+ /opt/openrobots/include/casadi/core/runtime/shared.hpp \
+ /opt/openrobots/include/casadi/core/runtime/casadi_runtime.hpp \
+ /opt/openrobots/include/casadi/core/casadi_misc.hpp \
+ /opt/openrobots/include/casadi/core/importer.hpp \
+ /opt/openrobots/include/casadi/core/callback.hpp \
+ /opt/openrobots/include/casadi/core/integrator.hpp \
+ /opt/openrobots/include/casadi/core/linsol.hpp \
+ /opt/openrobots/include/casadi/core/rootfinder.hpp \
+ /opt/openrobots/include/casadi/core/casadi_enum.hpp \
+ /opt/openrobots/include/casadi/core/conic.hpp \
+ /opt/openrobots/include/casadi/core/nlpsol.hpp \
+ /opt/openrobots/include/casadi/core/dple.hpp \
+ /opt/openrobots/include/casadi/core/expm.hpp \
+ /opt/openrobots/include/casadi/core/interpolant.hpp \
+ /opt/openrobots/include/casadi/core/external.hpp \
+ /opt/openrobots/include/casadi/core/integration_tools.hpp \
+ /opt/openrobots/include/casadi/core/function.hpp \
+ /opt/openrobots/include/casadi/core/nlp_tools.hpp \
+ /opt/openrobots/include/casadi/core/nlp_builder.hpp \
+ /opt/openrobots/include/casadi/core/dae_builder.hpp \
+ /opt/openrobots/include/casadi/core/xml_file.hpp \
+ /opt/openrobots/include/casadi/core/xml_node.hpp \
+ /opt/openrobots/include/casadi/core/optistack.hpp \
+ /opt/openrobots/include/casadi/core/serializer.hpp \
+ /opt/openrobots/include/casadi/core/tools.hpp \
+ /opt/openrobots/include/pinocchio/autodiff/casadi/spatial/se3-tpl.hpp \
+ /opt/openrobots/include/pinocchio/autodiff/casadi/utils/static-if.hpp \
+ /opt/openrobots/include/pinocchio/autodiff/casadi/math/matrix.hpp \
+ /opt/openrobots/include/pinocchio/autodiff/casadi/math/quaternion.hpp \
+ /opt/openrobots/include/pinocchio/autodiff/casadi/math/triangular-matrix.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/JointCommand.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/RobotState.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/JointState.hpp \
@@ -2151,8 +2312,6 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/LIPState.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/ISMPC.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/WalkingData.hpp \
- /usr/include/c++/13/deque /usr/include/c++/13/bits/stl_deque.h \
- /usr/include/c++/13/bits/deque.tcc \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/FootstepPlanElement.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/DoubleSupportConfiguration.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/Foot.hpp \
@@ -2183,6 +2342,12 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /opt/hpipm/include/hpipm_d_dense_qp_sol.h \
  /opt/hpipm/include/hpipm_d_dense_qp_seed.h \
  /opt/hpipm/include/hpipm_timing.h /opt/blasfeo/include/blasfeo_timing.h \
+ /home/rum/Sapienza/Excelent/mpc/include/labrob_qpsolvers/OSQPSolver.hpp \
+ /usr/local/include/osqp/osqp.h /usr/local/include/osqp/osqp_configure.h \
+ /usr/local/include/osqp/osqp_api_constants.h \
+ /usr/local/include/osqp/osqp_api_types.h \
+ /usr/local/include/osqp/osqp_api_functions.h \
+ /usr/local/include/osqp/osqp_export_define.h \
  /home/rum/Sapienza/Excelent/mpc/include/labrob_qpsolvers/QPSolverEigenWrapper.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/utils.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/WholeBodyController.hpp \
@@ -2208,6 +2373,10 @@ CMakeFiles/main.dir/main.cpp.o: /home/rum/Sapienza/Excelent/mpc/main.cpp \
  /opt/openrobots/include/pinocchio/algorithm/crba.hxx \
  /opt/openrobots/include/pinocchio/algorithm/crba.txx \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/GaitConfiguration.hpp \
+ /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/WBNMPC.hpp \
+ /opt/openrobots/include/pinocchio/algorithm/rnea-derivatives.hpp \
+ /opt/openrobots/include/pinocchio/algorithm/rnea-derivatives.hxx \
+ /opt/openrobots/include/pinocchio/algorithm/rnea-derivatives.txx \
  /home/rum/Sapienza/Excelent/mpc/MujocoUI.hpp /usr/include/GLFW/glfw3.h \
  /usr/include/GL/gl.h /usr/include/GL/glext.h \
  /usr/include/KHR/khrplatform.h /usr/local/include/mujoco/mujoco.h \

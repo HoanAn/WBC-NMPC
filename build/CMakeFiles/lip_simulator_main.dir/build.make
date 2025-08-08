@@ -108,6 +108,8 @@ lip_simulator_main: /usr/lib/x86_64-linux-gnu/liboctomath.so
 lip_simulator_main: /opt/hpipm/lib/libhpipm.a
 lip_simulator_main: /opt/blasfeo/lib/libblasfeo.a
 lip_simulator_main: /usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5
+lip_simulator_main: /opt/openrobots/lib/libcasadi.so
+lip_simulator_main: /usr/local/lib/libosqp.so
 lip_simulator_main: CMakeFiles/lip_simulator_main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable lip_simulator_main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/lip_simulator_main.dir/link.txt --verbose=$(VERBOSE)

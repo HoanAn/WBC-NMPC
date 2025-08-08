@@ -110,6 +110,8 @@ main: /usr/lib/x86_64-linux-gnu/liboctomath.so
 main: /opt/hpipm/lib/libhpipm.a
 main: /opt/blasfeo/lib/libblasfeo.a
 main: /usr/lib/x86_64-linux-gnu/libjsoncpp.so.1.9.5
+main: /opt/openrobots/lib/libcasadi.so
+main: /usr/local/lib/libosqp.so
 main: CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)

@@ -17,6 +17,10 @@
 #include <hrp4_locomotion/WalkingData.hpp>
 #include <hrp4_locomotion/utils.hpp>
 #include <hrp4_locomotion/WholeBodyController.hpp>
+#include <hrp4_locomotion/WBNMPC.hpp>
+#include <pinocchio/autodiff/casadi.hpp>
+
+#include <casadi/casadi.hpp>
 
 #include <labrob_qpsolvers/qpsolvers.hpp>
 
@@ -64,6 +68,7 @@ class WalkingManager {
   double cov_mod_pos, cov_mod_vel, cov_mod_zmp;
 
   std::shared_ptr<WholeBodyController> whole_body_controller_ptr_;
+  std::shared_ptr<WholeBodyMPC> whole_body_MPC_ptr_;
 
 private:
 

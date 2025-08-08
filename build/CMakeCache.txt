@@ -71,9 +71,7 @@ CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 //Path to a program.
 CMAKE_AR:FILEPATH=/usr/bin/ar
 
-//Choose the type of build, options are: None Debug Release RelWithDebInfo
-// MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -334,6 +332,9 @@ onelib:FILEPATH=/usr/lib/x86_64-linux-gnu/liburdfdom_world.so
 
 //Path to a library.
 onelibd:FILEPATH=onelibd-NOTFOUND
+
+//The directory containing a CMake configuration file for osqp.
+osqp_DIR:PATH=/usr/local/lib/cmake/osqp
 
 //The directory containing a CMake configuration file for pinocchio.
 pinocchio_DIR:PATH=/opt/openrobots/lib/cmake/pinocchio

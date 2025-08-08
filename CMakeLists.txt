@@ -8,6 +8,9 @@ find_package(pinocchio REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(mujoco REQUIRED)
 find_package(jsoncpp REQUIRED)
+find_package(casadi REQUIRED)
+find_package(osqp REQUIRED)
+
 
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
   if (NOT CMAKE_BUILD_TYPE)
@@ -20,6 +23,7 @@ set(blasfeo_INCLUDE_DIRS /opt/blasfeo/include)
 set(hpipm_INCLUDE_DIRS /opt/hpipm/include)
 set(blasfeo_LIBRARIES /opt/blasfeo/lib/libblasfeo.a)
 set(hpipm_LIBRARIES /opt/hpipm/lib/libhpipm.a)
+set(casadi_LIBRARIES /opt/openrobots/lib/libcasadi.so)
 
 add_library(
   WalkingControllerLibrary STATIC
@@ -39,6 +43,7 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WalkingManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WalkingState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WholeBodyController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/WBNMPC.cpp
 )
 
 target_include_directories(WalkingControllerLibrary
@@ -46,13 +51,21 @@ target_include_directories(WalkingControllerLibrary
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${hpipm_INCLUDE_DIRS}
     ${blasfeo_INCLUDE_DIRS}
+    ${casadi_INCLUDE_DIRS}
+    ${osqp_INCLUDE_DIRS}
+    
 )
-
+message(STATUS "CasADi libraries: ${casadi_LIBRARIES}")
 target_link_libraries(WalkingControllerLibrary
   pinocchio::pinocchio
   ${hpipm_LIBRARIES}
   ${blasfeo_LIBRARIES}
   jsoncpp_lib
+  ${casadi_LIBRARIES}
+ 
+  osqp::osqp
+  
+  
 )
 
 add_executable(main
@@ -78,6 +91,22 @@ target_include_directories(lip_simulator_main
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_link_libraries(lip_simulator_main
+  pinocchio::pinocchio
+  WalkingControllerLibrary
+)
+
+
+add_executable(test
+  test.cpp
+)
+target_include_directories(test
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #${Pinocchio_INCLUDE_DIRS}
+)
+target_link_libraries(test
+  glfw
+  mujoco::mujoco
   pinocchio::pinocchio
   WalkingControllerLibrary
 )

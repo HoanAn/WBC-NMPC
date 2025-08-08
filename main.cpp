@@ -7,6 +7,10 @@
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
+#include <pinocchio/autodiff/casadi.hpp>
+
+#include <casadi/casadi.hpp>
+
 
 // Labrob
 #include <hrp4_locomotion/JointCommand.hpp>
@@ -92,7 +96,7 @@ int main() {
   }
   mjData* mj_data_ptr = mj_makeData(mj_model_ptr);
 
-  std::ofstream joint_vel_log_file("/tmp/joint_vel.txt");
+  std::ofstream joint_vel_log_file("/tmp/joint_vel.txt");// Writing data to a temp file
   std::ofstream joint_eff_log_file("/tmp/joint_eff.txt");
   std::ofstream joint_names_log_file("/tmp/joint_names.txt");
 
@@ -124,7 +128,8 @@ int main() {
   for (int i = 0; i < mj_model_ptr->nq; ++i) {
     mj_data_ptr->qpos[i] = 0.0;
   }
-
+  // All the name between "" are the names of the joints in the MJCF (XML) file.
+  // Update the initial posture to the Mujoco.
   mj_data_ptr->qpos[2] = 0.792151-0.125+0.0263 - 0.071;
   mj_data_ptr->qpos[3] = 1.0;
   mj_data_ptr->qpos[mj_model_ptr->jnt_qposadr[mj_name2id(mj_model_ptr, mjOBJ_JOINT, "waist_pitch_joint")]] = waist_p_init;
@@ -154,22 +159,27 @@ int main() {
   //print wolrd frame position
   std::cerr << "World frame position: " << mj_data_ptr->qpos[0] << " " << mj_data_ptr->qpos[1] << " " << mj_data_ptr->qpos[2] << std::endl;
 
-  mjtNum* qpos0 = (mjtNum*) malloc(sizeof(mjtNum) * mj_model_ptr->nq);
-  memcpy(qpos0, mj_data_ptr->qpos, mj_model_ptr->nq * sizeof(mjtNum));
+  mjtNum* qpos0 = (mjtNum*) malloc(sizeof(mjtNum) * mj_model_ptr->nq);// dynamically asign memory for initial qpos
+  memcpy(qpos0, mj_data_ptr->qpos, mj_model_ptr->nq * sizeof(mjtNum));// copy initial qpos defined above to qpos0
 
+  // Create an array mapping joint names to their amateur value, 
+  //amateur is a parameter that defines the resistance of the joint to motion, 
+  //it is used in Mujoco to simulate the inertia of the joint.
   std::map<std::string, double> armatures;
   for (int i = 0; i < mj_model_ptr->nu; ++i) {
-    int joint_id = mj_model_ptr->actuator_trnid[i * 2];
-    std::string joint_name = std::string(mj_id2name(mj_model_ptr, mjOBJ_JOINT, joint_id));
+    int joint_id = mj_model_ptr->actuator_trnid[i * 2];// get the joint id from mujoco actuator
+    std::string joint_name = std::string(mj_id2name(mj_model_ptr, mjOBJ_JOINT, joint_id));// get the joint name from mujoco, mjOBJ_JOINT is the type of object we are looking for id
     int dof_id = mj_model_ptr->jnt_dofadr[joint_id];
+    //std::cerr << "DOF ID: " << dof_id << std::endl;
     armatures[joint_name] = mj_model_ptr->dof_armature[dof_id];
+    //std::cerr << "Joint: " << joint_name << ", Armature: " << armatures[joint_name] << std::endl;
   }
 
   // Walking Manager:
   labrob::RobotState initial_robot_state = robot_state_from_mujoco(mj_model_ptr, mj_data_ptr);
   labrob::WalkingManager walking_manager;
   walking_manager.init(initial_robot_state, armatures);
-
+  // Config the mujoco simulator
   auto& mujoco_ui = *labrob::MujocoUI::getInstance(mj_model_ptr, mj_data_ptr);
 
   for (int i = 0; i < mj_model_ptr->nu; ++i) {
