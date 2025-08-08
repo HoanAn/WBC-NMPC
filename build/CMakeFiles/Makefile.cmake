@@ -45,6 +45,12 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/usr/local/lib/cmake/mujoco/mujocoConfigVersion.cmake"
   "/usr/local/lib/cmake/mujoco/mujocoTargets-release.cmake"
   "/usr/local/lib/cmake/mujoco/mujocoTargets.cmake"
+  "/usr/local/lib/cmake/osqp/osqp-config-version.cmake"
+  "/usr/local/lib/cmake/osqp/osqp-config.cmake"
+  "/usr/local/lib/cmake/osqp/osqp-targets-noconfig.cmake"
+  "/usr/local/lib/cmake/osqp/osqp-targets.cmake"
+  "/usr/local/lib/cmake/osqp/osqpstatic-targets-noconfig.cmake"
+  "/usr/local/lib/cmake/osqp/osqpstatic-targets.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake-3.28/Modules/CMakeCommonLanguageInclude.cmake"
@@ -101,4 +107,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/WalkingControllerLibrary.dir/DependInfo.cmake"
   "CMakeFiles/main.dir/DependInfo.cmake"
   "CMakeFiles/lip_simulator_main.dir/DependInfo.cmake"
+  "CMakeFiles/test.dir/DependInfo.cmake"
   )

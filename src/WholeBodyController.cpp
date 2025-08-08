@@ -323,7 +323,7 @@ WholeBodyController::compute_inverse_dynamics(
   Eigen::VectorXd d_max(d_max_acc.rows() + 2 * d_max_force_one.rows());
   d_min << d_min_acc, d_min_force_one, d_min_force_one;
   d_max << d_max_acc, d_max_force_one, d_max_force_one;
-
+  //SOLVE THE WBC 
   wbc_solver_ptr_->solve(H, f, A, b, C, d_min, d_max);
   Eigen::VectorXd solution = wbc_solver_ptr_->get_solution();
   Eigen::VectorXd q_ddot = solution.head(6 + n_joints_);

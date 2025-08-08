@@ -19,6 +19,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/rum/Sapienza/Excelent/mpc/src/LIPState.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/LIPState.cpp.o.d"
   "/home/rum/Sapienza/Excelent/mpc/src/RobotState.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o.d"
   "/home/rum/Sapienza/Excelent/mpc/src/SE3.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o.d"
+  "/home/rum/Sapienza/Excelent/mpc/src/WBNMPC.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o.d"
   "/home/rum/Sapienza/Excelent/mpc/src/WalkingData.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o.d"
   "/home/rum/Sapienza/Excelent/mpc/src/WalkingManager.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o.d"
   "/home/rum/Sapienza/Excelent/mpc/src/WalkingState.cpp" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o" "gcc" "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o.d"

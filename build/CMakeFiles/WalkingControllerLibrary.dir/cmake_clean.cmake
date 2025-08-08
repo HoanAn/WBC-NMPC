@@ -21,6 +21,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/WalkingControllerLibrary.dir/src/RobotState.cpp.o.d"
   "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o"
   "CMakeFiles/WalkingControllerLibrary.dir/src/SE3.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o.d"
   "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o"
   "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingData.cpp.o.d"
   "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingManager.cpp.o"
