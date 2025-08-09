@@ -1893,7 +1893,19 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/LIPState.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/RobotState.hpp \
  /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/JointState.hpp \
- /usr/include/c++/13/iostream /usr/include/boost/algorithm/string.hpp \
+ /usr/include/c++/13/iostream /usr/include/termios.h \
+ /usr/include/x86_64-linux-gnu/bits/termios.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-struct.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-c_cc.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-c_iflag.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-baud.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-c_cflag.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-tcflow.h \
+ /usr/include/x86_64-linux-gnu/bits/termios-misc.h \
+ /usr/include/x86_64-linux-gnu/sys/ttydefaults.h \
+ /usr/include/boost/algorithm/string.hpp \
  /usr/include/boost/algorithm/string/std_containers_traits.hpp \
  /usr/include/boost/algorithm/string/std/string_traits.hpp \
  /usr/include/boost/algorithm/string/yes_no_type.hpp \

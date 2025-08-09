@@ -15767,6 +15767,7 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
   /usr/include/stdlib.h \
   /usr/include/string.h \
   /usr/include/strings.h \
+  /usr/include/termios.h \
   /usr/include/time.h \
   /usr/include/unistd.h \
   /usr/include/wchar.h \
@@ -15822,6 +15823,16 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
   /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
   /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
   /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-baud.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-c_cc.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-c_cflag.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-c_iflag.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-misc.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-struct.h \
+  /usr/include/x86_64-linux-gnu/bits/termios-tcflow.h \
+  /usr/include/x86_64-linux-gnu/bits/termios.h \
   /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
   /usr/include/x86_64-linux-gnu/bits/time.h \
   /usr/include/x86_64-linux-gnu/bits/time64.h \
@@ -15888,6 +15899,7 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/single_threaded.h \
+  /usr/include/x86_64-linux-gnu/sys/ttydefaults.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h \
@@ -15901,6 +15913,20 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
   /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/xmmintrin.h
 
+
+/usr/include/x86_64-linux-gnu/sys/ttydefaults.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-struct.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_iflag.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_cflag.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-baud.h:
 
 /usr/include/c++/13/ext/slist:
 
@@ -15975,6 +16001,8 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
 /home/rum/Sapienza/Excelent/mpc/src/WalkingState.cpp:
 
 /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/WholeBodyController.hpp:
+
+/usr/include/x86_64-linux-gnu/bits/termios-tcflow.h:
 
 /home/rum/Sapienza/Excelent/mpc/include/hrp4_locomotion/WalkingManager.hpp:
 
@@ -16103,6 +16131,8 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
 /usr/include/boost/algorithm/string/detail/predicate.hpp:
 
 /usr/include/boost/fusion/view/filter_view/detail/next_impl.hpp:
+
+/usr/include/x86_64-linux-gnu/bits/termios-misc.h:
 
 /usr/include/boost/fusion/view/filter_view/detail/key_of_impl.hpp:
 
@@ -18262,6 +18292,8 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
 
 /opt/openrobots/include/casadi/core/runtime/casadi_mmax.hpp:
 
+/usr/include/x86_64-linux-gnu/bits/termios-c_cc.h:
+
 /usr/include/boost/preprocessor/tuple/detail/is_single_return.hpp:
 
 /usr/include/boost/move/core.hpp:
@@ -18497,6 +18529,8 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
 /opt/openrobots/include/pinocchio/algorithm/center-of-mass.txx:
 
 /usr/include/boost/fusion/container/list/detail/next_impl.hpp:
+
+/usr/include/termios.h:
 
 /usr/include/boost/fusion/container/list/detail/value_of_impl.hpp:
 
@@ -19317,6 +19351,8 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o: /home/rum/Sapienza/Exce
 /usr/include/boost/function_types/detail/retag_default_cc.hpp:
 
 /usr/include/boost/type_traits/is_stateless.hpp:
+
+/usr/include/x86_64-linux-gnu/bits/termios.h:
 
 /usr/include/boost/type_traits/is_swappable.hpp:
 

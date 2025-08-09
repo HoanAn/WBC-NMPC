@@ -3,6 +3,8 @@
 // STL
 #include <fstream>
 #include <iostream>
+#include <termios.h>
+#include <unistd.h>
 
 // Boost
 #include <boost/algorithm/string.hpp>
@@ -496,6 +498,26 @@ void saveFootstepPlan(
         << duration << ","
         << labrob::to_string(walking_state) << std::endl;
   }
+}
+
+void pressAnyKey() {
+    // Disable canonical mode and echo for terminal input
+    termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    std::cout << "Press the spacebar to continue..." << std::endl;
+
+    char ch;
+    // Loop until the spacebar is pressed
+    do {
+        ch = getchar();
+    } while (ch != ' ');
+
+    // Restore terminal settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
 
 } // end namespace labrob

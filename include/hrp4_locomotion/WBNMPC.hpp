@@ -36,6 +36,9 @@
 #include <labrob_qpsolvers/qpsolvers.hpp>
 
 
+#include <hrp4_locomotion/utils.hpp>
+
+
 // Eigen
 // #include <Eigen/Core>
 // #include <Eigen/Geometry>

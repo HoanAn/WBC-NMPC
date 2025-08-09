@@ -89,6 +89,7 @@ WholeBodyMPC::WholeBodyMPC(
 
 
   std::cout << "Setting up casadi components" << std::endl; 
+  
 
   SX ca_q = SX::sym("q", robot_model_.nq);
   Ca_ConfigVector cs_q(robot_model_.nq);
@@ -115,6 +116,7 @@ WholeBodyMPC::WholeBodyMPC(
   for (Eigen::DenseIndex i = 0; i < robot_model_.nv; ++i) {
     tau_rnea(i) = data_casadi.tau[i];
   }
+  std::cout << "func RNEA rows, cols: (" << tau_rnea.size1() <<", "<< tau_rnea.size2()<< ")"<< std::endl;
   std::cout << "Building RNEA eval casadi function" << std::endl; 
   // Function eval_rnea("eval_rnea", SXVector{ca_q, ca_v, ca_a}, SXVector{tau_rnea});
   // std::cout << "Done building RNEA eval casadi FUNCTION" << std::endl;
@@ -124,9 +126,15 @@ WholeBodyMPC::WholeBodyMPC(
   std::cout << "Building RNEA Jacobian casadi function" << std::endl; 
   SX input_vars = vertcat(ca_q, ca_v, ca_pos_v);
   SX Jacob_RNEA_ca = jacobian(tau_rnea, input_vars);
+  std::cout << "Jacob_RNEA" << tau_rnea << std::endl;
+  
 
   eval_Jacob_rnea_ = Function("eval_Jacob_rnea", SXVector{ca_q, ca_v, ca_pos_v}, SXVector{Jacob_RNEA_ca});
+
   std::cout << "Done Building RNEA Jacobian eval casadi function" << std::endl; 
+  std::cout << "Jacobian RNEA rows, cols: (" << Jacob_RNEA_ca.size1() <<", "<< Jacob_RNEA_ca.size2()<< ")"<< std::endl;
+  pressAnyKey();
+  std::cout << "Space bar pressed! Program continuing." << std::endl;
   // Dict codegen_options;
   // codegen_options["with_header"] = true;
   // eval_Jacob_rnea_.generate("eval_Jacob_rnea", codegen_options);
@@ -164,6 +172,7 @@ WholeBodyMPC::compute_inverse_dynamics(
   DM Jacob_rnea = eval_Jacob_rnea_(DMVector{q_vec, v_vec, v_vec})[0];
 
   std::cout << "Jacobian RNEA: " << Jacob_rnea << std::endl;
+  std::cout << "Jacobian RNEA rows, cols: (" << Jacob_rnea.size1() <<", "<< Jacob_rnea.size2()<< ")"<< std::endl;
 
   // Compute pinocchio terms
   pinocchio::jacobianCenterOfMass(robot_model, robot_data, q);

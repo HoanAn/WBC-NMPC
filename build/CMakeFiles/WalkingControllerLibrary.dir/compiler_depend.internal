@@ -15784,6 +15784,7 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o
  /usr/include/stdlib.h
  /usr/include/string.h
  /usr/include/strings.h
+ /usr/include/termios.h
  /usr/include/time.h
  /usr/include/unistd.h
  /usr/include/wchar.h
@@ -15839,6 +15840,16 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o
  /usr/include/x86_64-linux-gnu/bits/strings_fortified.h
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h
+ /usr/include/x86_64-linux-gnu/bits/termios-baud.h
+ /usr/include/x86_64-linux-gnu/bits/termios-c_cc.h
+ /usr/include/x86_64-linux-gnu/bits/termios-c_cflag.h
+ /usr/include/x86_64-linux-gnu/bits/termios-c_iflag.h
+ /usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h
+ /usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h
+ /usr/include/x86_64-linux-gnu/bits/termios-misc.h
+ /usr/include/x86_64-linux-gnu/bits/termios-struct.h
+ /usr/include/x86_64-linux-gnu/bits/termios-tcflow.h
+ /usr/include/x86_64-linux-gnu/bits/termios.h
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h
  /usr/include/x86_64-linux-gnu/bits/time.h
  /usr/include/x86_64-linux-gnu/bits/time64.h
@@ -15905,6 +15916,7 @@ CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o
  /usr/include/x86_64-linux-gnu/sys/cdefs.h
  /usr/include/x86_64-linux-gnu/sys/select.h
  /usr/include/x86_64-linux-gnu/sys/single_threaded.h
+ /usr/include/x86_64-linux-gnu/sys/ttydefaults.h
  /usr/include/x86_64-linux-gnu/sys/types.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h
