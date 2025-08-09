@@ -1,6 +1,0 @@
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/WalkingControllerLibrary.dir
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/main.dir
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/lip_simulator_main.dir
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/test.dir
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/edit_cache.dir
-/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/rebuild_cache.dir
