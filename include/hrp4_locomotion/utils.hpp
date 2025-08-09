@@ -111,6 +111,8 @@ void saveFootstepPlan(
     const std::string& file_path
 );
 
+void pressAnyKey();
+
 } // end namespace labrob
 
 #endif // LABROB_UTILS_HPP_

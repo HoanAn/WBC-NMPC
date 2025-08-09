@@ -61,6 +61,8 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
     root_joint,
     full_robot_model
   );
+  // Define the locked joints in the constant string "joints_to_lock_names" 
+  //for the pinocchio robot model to build a reduced model.
   const std::vector<std::string> joint_to_lock_names{};
   std::vector<pinocchio::JointIndex> joint_ids_to_lock;
   for (const auto& joint_name : joint_to_lock_names) {
@@ -68,7 +70,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
       joint_ids_to_lock.push_back(full_robot_model.getJointId(joint_name));
     }
   }
-
+  // Build such a rduced model by pinocchio API
   robot_model_ = pinocchio::buildReducedModel(
       full_robot_model,
       joint_ids_to_lock,
@@ -128,7 +130,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   double l_shoulder_y_des = 0.0;
   double l_elbow_p_des = r_elbow_p_des;
 
-  q_jnt_des_ = q_init.tail(njnt);
+  q_jnt_des_ = q_init.tail(njnt);// Extract the last njnt elements of the joint configuration vector.
 
   // TODO: init using node handle.
   controller_frequency_ = 600;
@@ -282,6 +284,15 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
       armatures
   );
 
+  auto WBMPC_params = WholeBodyMPCParams::getDefaultParams();
+  whole_body_MPC_ptr_ = std::make_shared<WholeBodyMPC>(
+      WBMPC_params,
+      robot_model_,
+      q_jnt_des_,
+      0.001 * controller_timestep_msec_,
+      armatures
+  );
+
   // Init discrete LIP dynamics:
   discrete_lip_dynamics_ptr_ = std::make_unique<labrob::DiscreteLIPDynamics>(
       std::sqrt(9.81 / com_target_height),
@@ -392,7 +403,7 @@ WalkingManager::update(
     double controller_timestep = 0.001 * static_cast<double>(controller_timestep_msec_);
 
     int njnt = robot_model_.nv - 6; // size of configuration space without floating base
-
+    // These functions convert the robot state from the mujoco format to the pinocchio format.
     auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
     auto qdot = robot_state_to_pinocchio_joint_velocity(robot_model_, robot_state);
 
@@ -420,6 +431,7 @@ WalkingManager::update(
     const auto& T_pelvis = robot_data_.oMf[pelvis_idx_];
     auto torso_orientation = T_torso.rotation();
     auto pelvis_orientation = T_pelvis.rotation();
+    // This is how to get the Jacobian matrix of a frame (torso in this case) from Pinocchio data structure.
     Eigen::MatrixXd J_torso = Eigen::MatrixXd::Zero(6, robot_model_.nv);
     pinocchio::getFrameJacobian(
         robot_model_,
@@ -552,6 +564,7 @@ WalkingManager::update(
 
     // CoM task:
     auto mpc_t0_ms = std::chrono::system_clock::now();
+    // SOLVE THE IS-MPC PROBLEM:
     ismpc_ptr_->solve(t_msec_, walking_data_, filtered_state_);
     // std::cout << "IS-MPC input: " << ismpc_ptr_->getInput().transpose() << std::endl;
     auto mpc_tf_ms = std::chrono::system_clock::now();
@@ -630,6 +643,17 @@ WalkingManager::update(
         current_gait_configuration,
         desired_gait_configuration
     );
+
+    labrob::JointCommand joint_command2 = whole_body_MPC_ptr_->compute_inverse_dynamics(
+        robot_model_,
+        robot_state,
+        robot_data_,
+        current_gait_configuration,
+        desired_gait_configuration
+    );
+
+
+
 
     auto end_time = std::chrono::system_clock::now();
     auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
