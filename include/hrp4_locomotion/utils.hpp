@@ -17,6 +17,9 @@
 #include <hrp4_locomotion/RobotState.hpp>
 #include <hrp4_locomotion/WalkingState.hpp>
 
+//#include <labrob_qpsolvers/qpsolvers.hpp>
+
+
 namespace labrob {
 
 template <class T>
@@ -112,6 +115,8 @@ void saveFootstepPlan(
 );
 
 void pressAnyKey();
+
+
 
 } // end namespace labrob
 

@@ -1,10 +1,14 @@
+#include <fstream>
+
 #include <hrp4_locomotion/WBNMPC.hpp>
 #include <chrono> 
 
 
 
 #include <hrp4_locomotion/JointCommand.hpp>
-#include <hrp4_locomotion/utils.hpp>
+//#include <hrp4_locomotion/utils.hpp>
+
+
 
 namespace labrob {
 
@@ -18,13 +22,25 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
   params.Kd_regulation = 10.0;
 
   params.weight_q_ddot = 1e-4;
-  params.weight_com = 0.1;
+
   params.weight_lsole = 1;
   params.weight_rsole = 1;
-  params.weight_torso = 1e-3;
+  
   params.weight_pelvis = 0;
-  params.weight_angular_momentum = 0.0001;
   params.weight_regulation = 1e-4;
+  params.weight_angular_momentum = 0.0001;
+
+  /// Weight needed
+  params.weight_com = 0.1; // First 3 components of vector q
+  params.weight_torso = 1e-3; // The next fourth quaternion component of vector q
+  params.weight_general_qj = 1e-3; // The rest of joint position
+
+  params.weight_general_vb = 0.2; // The first three components of vector v (linear velocity of the base)
+  params.weight_general_omega_b = 1e-3; // The next three components of vector v (angular velocity of the base)
+  params.weight_general_v = 1e-3; // The rest of joint velocity
+
+  params.weight_contact_force_xy = 4e-3; // Contact forces in x and y direction
+  params.weight_contact_force_z = 0.1; // Contact forces in z direction
 
   params.cmm_selection_matrix_x = 1e-6;
   params.cmm_selection_matrix_y = 1e-6;
@@ -42,15 +58,18 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
 WholeBodyMPC::WholeBodyMPC(
     const WholeBodyMPCParams& params, const pinocchio::Model& robot_model,
     const Eigen::VectorXd& q_jnt_reg,
-    double sample_time,
+    double dynamic_discretization_time,
+    int N,
     std::map<std::string, double>& armatures)
     : robot_model_(robot_model),
       q_jnt_reg_(q_jnt_reg),
-      sample_time_(sample_time),
+      dynamic_discretization_time_(dynamic_discretization_time),
+      N_(N),
       params_(params)
 {
 
   robot_data_ = pinocchio::Data(robot_model_);
+
 
   lsole_idx_ = robot_model_.getFrameId("left_foot_link");
   rsole_idx_ = robot_model_.getFrameId("right_foot_link");
@@ -68,10 +87,35 @@ WholeBodyMPC::WholeBodyMPC(
   J_rsole_dot_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
 
   n_joints_ = robot_model.nv - 6;
-  n_contacts_ = 4;
-  n_wbc_variables_ = 6 + n_joints_ + 2 * 3 * n_contacts_;
-  n_wbc_equalities_ = 6 + 2 * 6 + 3 * n_contacts_;
-  n_wbc_inequalities_ = 2 * n_joints_ + 2 * 4 * n_contacts_;
+
+  int num_q = robot_model_.nq*(N+1); // including q0
+  int num_v = robot_model_.nv*(N+1); // including v0
+  int num_contact = 2; // number of contacts per foot (Heel and Toe)
+  int num_force = num_contact*3* N; // consider 1 foot, 3 forces per contact (Fx, Fy, Fz), N time steps
+  int num_torques_single_step = robot_model_.nq-7; // excluding q0, q1, q2, q3, q4, q5, q6 (base link)
+  int num_torques = num_torques_single_step*(N); // joint torques
+
+
+  int num_q_single_step = robot_model_.nq; // = 28
+  int num_v_single_step = robot_model_.nv; // = 27
+
+
+  int num_force_single_foot_single_step = num_contact * 3; // 3 forces (Fx, Fy, Fz) per contact
+
+  int num_constraint = N* ( num_q_single_step + // f_kin
+                            num_v_single_step + // f_dyn
+                            num_force_single_foot_single_step*2 + // f_Fswing
+                            2*num_contact + // f_friction
+                            2*num_contact + // f_feet_height
+                            4*num_contact); // f_tang_contact_vel
+
+  n_wbnmpc_variables_ = num_q + num_v + num_torques + 2 * num_force; // ca_q, ca_v,  tau, F_lsole, F_rsole
+  n_wbnmpc_equalities_ = num_constraint - N * 2 * num_contact; // excluding the friction
+  n_wbnmpc_inequalities_ = N * 2 * num_contact;
+  n_contacts_ = num_contact;
+
+
+
 
   M_armature_ = Eigen::VectorXd::Zero(n_joints_);
   for (pinocchio::JointIndex joint_id = 2;
@@ -81,67 +125,141 @@ WholeBodyMPC::WholeBodyMPC(
     M_armature_(joint_id - 2) = armatures[joint_name];
   }
 
-  wbc_solver_ptr_ = std::make_unique<qpsolvers::QPSolverEigenWrapper<double>>(
-      std::make_shared<qpsolvers::HPIPMQPSolver>(
-          n_wbc_variables_, n_wbc_equalities_, n_wbc_inequalities_
+  update_weight_Hessian(params_, num_q_single_step, num_v_single_step, num_torques_single_step, num_force_single_foot_single_step*2);
+
+  std::cout << "Init OSQP solver" << std::endl;
+  wbnmpc_solver_ptr_ = std::make_unique<qpsolvers::QPSolverEigenWrapper<double>>(
+      std::make_shared<qpsolvers::OSQPSolver>(
+          n_wbnmpc_variables_, n_wbnmpc_equalities_, n_wbnmpc_inequalities_,P_
       )
   );
 
 
-  std::cout << "Setting up casadi components" << std::endl; 
-  
 
-  SX ca_q = SX::sym("q", robot_model_.nq);
-  Ca_ConfigVector cs_q(robot_model_.nq);
-  cs_q = Eigen::Map<Ca_ConfigVector>(static_cast<std::vector<SX> > (ca_q).data(), robot_model_.nq,1);
-  std::cout << "Done setting cs_q" << std::endl; 
-
-  SX ca_v = SX::sym("v", robot_model_.nv);
-  Ca_TangentVector cs_v(robot_model_.nv);
-  cs_v = Eigen::Map<Ca_TangentVector>(static_cast<std::vector<SX> > (ca_v).data(), robot_model_.nv,1);
-  
-  SX ca_pos_v = SX::sym("pos_v", robot_model_.nv);
-  
-  SX ca_a = (ca_pos_v - ca_v)/ sample_time_;
-  Ca_TangentVector cs_a(robot_model_.nv);
-  cs_a = Eigen::Map<Ca_TangentVector>(static_cast<std::vector<SX> > (ca_a).data(), robot_model_.nv,1);
-
-  std::cout << "Building casadi robot model" << std::endl;
-  CasadiModel model_casadi = robot_model_.cast<SX>();
-  CasadiData data_casadi(model_casadi);
-
-  rnea(model_casadi, data_casadi, cs_q, cs_v, cs_a);
-  std::cout << "Done building RNEA FUNCTION" << std::endl;
-  SX tau_rnea(robot_model_.nv,1);
-  for (Eigen::DenseIndex i = 0; i < robot_model_.nv; ++i) {
-    tau_rnea(i) = data_casadi.tau[i];
-  }
-  std::cout << "func RNEA rows, cols: (" << tau_rnea.size1() <<", "<< tau_rnea.size2()<< ")"<< std::endl;
-  std::cout << "Building RNEA eval casadi function" << std::endl; 
-  // Function eval_rnea("eval_rnea", SXVector{ca_q, ca_v, ca_a}, SXVector{tau_rnea});
-  // std::cout << "Done building RNEA eval casadi FUNCTION" << std::endl;
-
-  
-  // //SX f_RNEA_ca = pinocchio::rnea(model_casadi, data_casadi, cs_q, cs_v, cs_a);
-  std::cout << "Building RNEA Jacobian casadi function" << std::endl; 
-  SX input_vars = vertcat(ca_q, ca_v, ca_pos_v);
-  SX Jacob_RNEA_ca = jacobian(tau_rnea, input_vars);
-  std::cout << "Jacob_RNEA" << tau_rnea << std::endl;
-  
-
-  eval_Jacob_rnea_ = Function("eval_Jacob_rnea", SXVector{ca_q, ca_v, ca_pos_v}, SXVector{Jacob_RNEA_ca});
-
-  std::cout << "Done Building RNEA Jacobian eval casadi function" << std::endl; 
-  std::cout << "Jacobian RNEA rows, cols: (" << Jacob_RNEA_ca.size1() <<", "<< Jacob_RNEA_ca.size2()<< ")"<< std::endl;
   pressAnyKey();
   std::cout << "Space bar pressed! Program continuing." << std::endl;
   // Dict codegen_options;
   // codegen_options["with_header"] = true;
   // eval_Jacob_rnea_.generate("eval_Jacob_rnea", codegen_options);
 
+  // Intialize the size  for the guess vars
+
+  guess_vars_.q_sol.resize((size_t)num_q);
+  guess_vars_.v_sol.resize((size_t)num_v);
+  guess_vars_.F_lsole_sol.resize((size_t)num_force);
+  guess_vars_.F_rsole_sol.resize((size_t)num_force);
+  guess_vars_.tau_sol.resize((size_t)num_torques);
+
+  //wbnmpc_solver_ptr_->P_ =
+  g_.resize(n_wbnmpc_variables_);
+  g_.setZero();
+  
+
 
 
 }
+
+
+void WholeBodyMPC::update_first_guess(const pinocchio::Model& robot_model,
+                                            pinocchio::Data& robot_data,
+                                      const Eigen::VectorXd& q_init, 
+                                      const int prediction_horizon)
+{
+
+  double total_mass = 0.0;
+    for (const auto &inertial : robot_model.inertias) {
+        total_mass += inertial.mass();
+    }
+  pinocchio::FrameIndex lsole_idx = robot_model.getFrameId("left_foot_link");
+  pinocchio::FrameIndex rsole_idx = robot_model.getFrameId("right_foot_link");
+
+  Eigen::MatrixXd J_lsole(6, robot_model.nv);
+  Eigen::MatrixXd J_rsole(6, robot_model.nv);
+  //pinocchio::computeJointJacobians(robot_model, robot_data, q_init);
+  
+  pinocchio::getFrameJacobian(
+        robot_model,
+        robot_data,
+        lsole_idx,
+        pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED,
+        J_lsole
+    );
+
+  pinocchio::getFrameJacobian(
+        robot_model,
+        robot_data,
+        rsole_idx,
+        pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED,
+        J_rsole
+    );
+
+
+  Eigen::VectorXd qdot_init = Eigen::VectorXd::Zero(robot_model.nv);
+  Eigen::VectorXd qddot_init = Eigen::VectorXd::Zero(robot_model.nv);
+  Eigen::VectorXd F_lsole_init = Eigen::VectorXd::Zero(6);
+  Eigen::VectorXd F_rsole_init = Eigen::VectorXd::Zero(6);
+  F_lsole_init(2) = total_mass * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_lsole_init(5) = total_mass * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_rsole_init(2) = total_mass * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_rsole_init(5) = total_mass * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+
+  pinocchio::rnea(robot_model, robot_data, q_init, qdot_init, qddot_init);
+
+  Eigen::VectorXd tau_init = Eigen::VectorXd::Zero(robot_model.nv);
+  Eigen::Map<pinocchio::Model::TangentVectorType>(tau_init.data(), robot_model.nv, 1) = robot_data.tau;
+  std::cout << "Initial tau from RNEA: \n" << tau_init.transpose() << std::endl;
+
+  Eigen::Vector3d F_lsole_heel_init = F_lsole_init.head(3);
+  Eigen::Vector3d F_lsole_toe_init = F_lsole_init.tail(3);
+  Eigen::Vector3d F_rsole_heel_init = F_rsole_init.head(3);
+  Eigen::Vector3d F_rsole_toe_init = F_rsole_init.tail(3);
+
+  Eigen::Vector3d toe_pos_vec = Eigen::Vector3d(params_.foot_length/2, 0.0, 0.0); // Toe position in the local frame
+  Eigen::Vector3d heel_pos_vec = Eigen::Vector3d(-params_.foot_length/2, 0.0, 0.0); // Heel position in the local frame
+
+  Eigen::VectorXd wrench_lsole_init(6);
+  Eigen::VectorXd wrench_rsole_init(6);
+  wrench_lsole_init.head(3) = F_lsole_heel_init + F_lsole_toe_init;
+  wrench_lsole_init.tail(3) = heel_pos_vec.cross(F_lsole_heel_init) + toe_pos_vec.cross(F_lsole_toe_init);
+
+  wrench_rsole_init.head(3) = F_rsole_heel_init + F_rsole_toe_init;
+  wrench_rsole_init.tail(3) = heel_pos_vec.cross(F_rsole_heel_init) + toe_pos_vec.cross(F_rsole_toe_init);
+
+  tau_init = tau_init - J_lsole.transpose() * wrench_lsole_init - J_rsole.transpose() * wrench_rsole_init;
+  // tau_init.segment(0,6) =  - wrench_lsole_init;
+  // tau_init.segment(6,6) =  - wrench_rsole_init;
+  std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
+
+
+    guess_vars_.q_sol = q_init.replicate(prediction_horizon+1,1);
+    guess_vars_.v_sol = qdot_init.replicate(prediction_horizon+1,1);
+    guess_vars_.F_lsole_sol = F_lsole_init.replicate(prediction_horizon,1);
+    guess_vars_.F_rsole_sol = F_rsole_init.replicate(prediction_horizon,1);
+    guess_vars_.tau_sol = tau_init.tail(robot_model.nv-6).replicate(prediction_horizon,1);
+  // for (int i = 0; i < prediction_horizon; i++){
+  //   //Eigen::Map<pinocchio::Model::ConfigVectorType>(guess_vars_.q_sol.data()+(i+1)*robot_model.nq, robot_model.nq, 1) = q_init;
+  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.v_sol.data()+(i+1)*robot_model.nv, robot_model.nv, 1) = Eigen::VectorXd::Zero(robot_model.nv);
+  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.F_lsole_sol.data()+i*6, 6, 1) = F_lsole_init;
+  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.F_rsole_sol.data()+i*6, 6, 1) = F_rsole_init;
+  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.tau_sol.data()+i*(robot_model.nv-6), robot_model.nv-6, 1) = tau_init.tail(robot_model.nv-6);
+  // };
+
+  std:: cout << "Updated first guess q_sol: \n" << guess_vars_.q_sol.transpose() << std::endl;
+  std:: cout << "Updated first guess v_sol: \n" << guess_vars_.v_sol.transpose() << std::endl;
+  std:: cout << "Updated first guess F_lsole_sol: \n" << guess_vars_.F_lsole_sol.transpose() << std::endl;
+  std:: cout << "Updated first guess F_rsole_sol: \n" << guess_vars_.F_rsole_sol.transpose() << std::endl;
+  std:: cout << "Updated first guess tau_sol: \n" << guess_vars_.tau_sol.transpose() << std::endl;
+
+  Gamma_vec_ = std::vector<double>(prediction_horizon * 4,1.0); // All contacts are active in the first guess
+  
+  desired_vars_ = guess_vars_;
+  solution_vars_ = guess_vars_;
+
+  
+
+  pressAnyKey();
+
+};
 
 labrob::JointCommand
 WholeBodyMPC::compute_inverse_dynamics(
@@ -149,269 +267,266 @@ WholeBodyMPC::compute_inverse_dynamics(
     const labrob::RobotState& robot_state,
     pinocchio::Data& robot_data,
     const labrob::GaitConfiguration& current,
-    const labrob::GaitConfiguration& desired
+    const labrob::GaitConfiguration& desired,
+    int64_t t_msec,
+    const labrob::WalkingData& walking_data
 ) {
 
   auto start_time = std::chrono::high_resolution_clock::now();
+  double dt = 0.001;
 
   auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
   auto qdot = robot_state_to_pinocchio_joint_velocity(robot_model_, robot_state);
 
-  /// Test the RNEA Jacobian matrix
-  std::vector<double> q_vec((size_t)robot_model_.nq);
-  Eigen::Map<pinocchio::Model::ConfigVectorType>(q_vec.data(), robot_model_.nq, 1) = q;
+  // Update for the q0 and v0
+  guess_vars_.q_sol.head(robot_model.nq) = q;
+  guess_vars_.v_sol.head(robot_model.nv) = qdot;
+  // std::copy( q.data(), q.data() + robot_model.nq, guess_vars_.q_sol.begin() );
+  // std::copy( qdot.data(), qdot.data() + robot_model.nv, guess_vars_.v_sol.begin() );
 
-  std::vector<double> v_vec((size_t)robot_model_.nv);
-  Eigen::Map<pinocchio::Model::ConfigVectorType>(q_vec.data(), robot_model_.nq, 1) = qdot;
+  // TODO: update the Gamma_vec_ wr.t the current and desired foot step
 
-  // std::vector<double> q_vec((size_t)robot_model_.nq);
-  // Eigen::Map<pinocchio::Model::ConfigVectorType>(q_vec.data(), robot_model_.nq, 1) = q;
+  const casadi_real* data_meas[8];
+  data_meas[0] = guess_vars_.q_sol.data();
+  data_meas[1] = guess_vars_.v_sol.data();
+  data_meas[2] = guess_vars_.F_lsole_sol.data();
+  data_meas[3] = guess_vars_.F_rsole_sol.data();
+  data_meas[4] = guess_vars_.tau_sol.data();
+  data_meas[5] = &dt;
+  data_meas[6] = &params_.mu;
+  data_meas[7] = Gamma_vec_.data();
+  //data_meas[8] = ref_feet_height_vec.data();
+  //casadi_real* res_out[1];
+  std::cout << "Codegen fconstraint" << std::endl;
 
-  std::cout << "Computing numerical Jacob RNEA" << std::endl;
+  eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,csc_constraint_ );
+  std::cout << "csc_constrain nzero: " << csc_constraint_.nzeros <<  std::endl;
+  eval_codegen(Jacob_f_total_constraint_work, Jacob_f_total_constraint, Jacob_f_total_constraint_sparsity_out, data_meas,csc_Jacob_constraint_ );
+  
+  std::cout << "f_fconstraint_eval: " << std::endl;
 
-  DM Jacob_rnea = eval_Jacob_rnea_(DMVector{q_vec, v_vec, v_vec})[0];
+  // TODO: first we must update the desired variables wr.t the time step
+  
 
-  std::cout << "Jacobian RNEA: " << Jacob_rnea << std::endl;
-  std::cout << "Jacobian RNEA rows, cols: (" << Jacob_rnea.size1() <<", "<< Jacob_rnea.size2()<< ")"<< std::endl;
+  update_weigtht_Jacobian(params_, robot_model.nq, robot_model.nv, robot_model.nv-6, 6*n_contacts_);
+  Eigen::VectorXd dense_constraint = cscToDenseVector(csc_constraint_);
+  // std::cout << "CSC constraint: \n" << std::endl;
+  // for (long long i = 0; i < csc_constraint_.nzeros; i++){
+  //   //std::cout << "Enter the loop" << std::endl;
+  //   std::cout << csc_constraint_.data[i] << " ";// << std::endl;
+  // }
+  std::cout << std::endl;
+  //std::cout << "Dense constraint: \n" << dense_constraint.transpose() << std::endl;
+  Eigen::VectorXd l_g = Eigen::VectorXd::Zero(n_wbnmpc_variables_)- dense_constraint;
+  Eigen::VectorXd u_g = Eigen::VectorXd::Zero(n_wbnmpc_variables_) - dense_constraint;
 
-  // Compute pinocchio terms
-  pinocchio::jacobianCenterOfMass(robot_model, robot_data, q);
-  pinocchio::computeJointJacobiansTimeVariation(robot_model, robot_data, q, qdot);
-  pinocchio::framesForwardKinematics(robot_model, robot_data, q);
+  // The upper part of the inequality constraint must be different from the lower part
+  u_g.segment(N_*(robot_model.nq+robot_model.nv+6), n_wbnmpc_inequalities_).setConstant(1e10);
 
-  pinocchio::getFrameJacobian(robot_model, robot_data, torso_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_torso_);
-  pinocchio::getFrameJacobian(robot_model, robot_data, pelvis_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_pelvis_);
-  pinocchio::getFrameJacobian(robot_model, robot_data, lsole_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_lsole_);
-  pinocchio::getFrameJacobian(robot_model, robot_data, rsole_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_rsole_);
+  // Solve the QP
+  wbnmpc_solver_ptr_->solve_CCS(P_,g_,csc_Jacob_constraint_,l_g,u_g);
+  //std::cout<< "OSQP solution: \n" << wbnmpc_solver_ptr_->get_solution().transpose() << std::endl;
 
-  pinocchio::centerOfMass(robot_model, robot_data, q, qdot, 0.0 * qdot); // This is to compute the drift term
-  pinocchio::getFrameJacobianTimeVariation(robot_model, robot_data, torso_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_torso_dot_);
-  pinocchio::getFrameJacobianTimeVariation(robot_model, robot_data, pelvis_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_pelvis_dot_);
-  pinocchio::getFrameJacobianTimeVariation(robot_model, robot_data, lsole_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_lsole_dot_);
-  pinocchio::getFrameJacobianTimeVariation(robot_model, robot_data, rsole_idx_, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, J_rsole_dot_);
+  // update the guess_vars = gues_vars_ + \alpha * solution
+  //pressAnyKey();
 
-  const auto& J_com = robot_data.Jcom;
-  const auto& centroidal_momentum_matrix = pinocchio::ccrba(robot_model, robot_data, q, qdot);
-  const auto& a_com_drift = robot_data.acom[0];
-  const auto a_lsole_drift = J_lsole_dot_ * qdot;
-  const auto a_rsole_drift = J_rsole_dot_ * qdot;
-  const auto a_torso_orientation_drift = J_torso_dot_.bottomRows<3>() * qdot;
-  const auto a_pelvis_orientation_drift = J_pelvis_dot_.bottomRows<3>() * qdot;
 
-  // Compute desired accelerations
-  auto err_com = desired.com.pos - current.com.pos;
-  auto err_com_vel = desired.com.vel - current.com.vel;
-
-  auto err_lsole = err_frameplacement(
-      pinocchio::SE3(desired.lsole.pos.R, desired.lsole.pos.p),
-      pinocchio::SE3(current.lsole.pos.R, current.lsole.pos.p)
-  );
-  auto err_lsole_vel = desired.lsole.vel - current.lsole.vel;
-
-  auto err_rsole = err_frameplacement(
-      pinocchio::SE3(desired.rsole.pos.R, desired.rsole.pos.p),
-      pinocchio::SE3(current.rsole.pos.R, current.rsole.pos.p)
-  );
-  auto err_rsole_vel = desired.rsole.vel - current.rsole.vel;
-
-  auto err_torso_orientation = err_rotation(desired.torso.pos, current.torso.pos);
-  auto err_torso_orientation_vel = desired.torso.vel - current.torso.vel;
-
-  auto err_pelvis_orientation = err_rotation(desired.pelvis.pos, current.pelvis.pos);
-  auto err_pelvis_orientation_vel = desired.pelvis.vel - current.pelvis.vel;
-
-  Eigen::VectorXd err_posture(6 + n_joints_);
-  err_posture << Eigen::VectorXd::Zero(6), desired.qjnt - current.qjnt;
-  Eigen::VectorXd err_posture_vel(6 + n_joints_); 
-  err_posture_vel << Eigen::VectorXd::Zero(6), desired.qjntdot - current.qjntdot;
-  Eigen::MatrixXd err_posture_selection_matrix = Eigen::MatrixXd::Zero(6 + n_joints_, 6 + n_joints_);
-  err_posture_selection_matrix.block(6, 6, n_joints_, n_joints_) = Eigen::MatrixXd::Identity(n_joints_, n_joints_);
-
-  Eigen::MatrixXd cmm_selection_matrix = Eigen::MatrixXd::Zero(3, 6);
-  cmm_selection_matrix(0, 3) = params_.cmm_selection_matrix_x;
-  cmm_selection_matrix(1, 4) = params_.cmm_selection_matrix_y;
-  cmm_selection_matrix(2, 5) = params_.cmm_selection_matrix_z;
-
-  Eigen::VectorXd desired_qddot(6 + n_joints_);
-  desired_qddot << Eigen::VectorXd::Zero(6), desired.qjntddot;
-  Eigen::VectorXd a_jnt_total = desired_qddot + params_.Kp_regulation * err_posture + params_.Kd_regulation * err_posture_vel;
-  Eigen::VectorXd a_com_total = desired.com.acc + params_.Kp_motion * err_com + params_.Kd_motion * err_com_vel;
-  Eigen::VectorXd a_lsole_total = desired.lsole.acc + params_.Kp_motion * err_lsole + params_.Kd_motion * err_lsole_vel;
-  Eigen::VectorXd a_rsole_total = desired.rsole.acc + params_.Kp_motion * err_rsole + params_.Kd_motion * err_rsole_vel;
-  Eigen::VectorXd a_torso_orientation_total = desired.torso.acc + params_.Kp_motion * err_torso_orientation + params_.Kd_motion * err_torso_orientation_vel;
-  Eigen::VectorXd a_pelvis_orientation_total = desired.pelvis.acc + params_.Kp_motion * err_pelvis_orientation + params_.Kd_motion * err_pelvis_orientation_vel;
-
-  // Build cost function
-  Eigen::MatrixXd H_acc = Eigen::MatrixXd::Zero(6 + n_joints_, 6 + n_joints_);
-  Eigen::VectorXd f_acc = Eigen::VectorXd::Zero(6 + n_joints_);
-
-  H_acc += params_.weight_q_ddot * Eigen::MatrixXd::Identity(6 + n_joints_, 6 + n_joints_);
-  H_acc += params_.weight_com * (J_com.transpose() * J_com);
-  H_acc += params_.weight_lsole * (J_lsole_.transpose() * J_lsole_);
-  H_acc += params_.weight_rsole * (J_rsole_.transpose() * J_rsole_);
-  H_acc += params_.weight_torso * (J_torso_.bottomRows<3>().transpose() * J_torso_.bottomRows<3>());
-  H_acc += params_.weight_pelvis * (J_pelvis_.bottomRows<3>().transpose() * J_pelvis_.bottomRows<3>());
-  H_acc += params_.weight_regulation * err_posture_selection_matrix;
-  H_acc += params_.weight_angular_momentum * centroidal_momentum_matrix.transpose() * cmm_selection_matrix.transpose() *
-      std::pow(sample_time_, 2.0) * cmm_selection_matrix * centroidal_momentum_matrix;
-
-  f_acc += params_.weight_com * J_com.transpose() * (a_com_drift - a_com_total);
-  f_acc += params_.weight_lsole * J_lsole_.transpose() * (a_lsole_drift - a_lsole_total);
-  f_acc += params_.weight_rsole * J_rsole_.transpose() * (a_rsole_drift - a_rsole_total);
-  f_acc += params_.weight_torso * J_torso_.bottomRows<3>().transpose() * (a_torso_orientation_drift - a_torso_orientation_total);
-  f_acc += params_.weight_pelvis * J_pelvis_.bottomRows<3>().transpose() * (a_pelvis_orientation_drift - a_pelvis_orientation_total);
-  f_acc += -params_.weight_regulation * err_posture_selection_matrix * a_jnt_total;
-  f_acc += params_.weight_angular_momentum * centroidal_momentum_matrix.transpose() * cmm_selection_matrix.transpose() *
-      sample_time_ * cmm_selection_matrix * centroidal_momentum_matrix * qdot;
-
-  auto q_jnt_dot_min = -robot_model.velocityLimit.tail(n_joints_);
-  auto q_jnt_dot_max = robot_model.velocityLimit.tail(n_joints_);
-  auto q_jnt_min = robot_model.lowerPositionLimit.tail(n_joints_);
-  auto q_jnt_max = robot_model.upperPositionLimit.tail(n_joints_);
-
-  Eigen::MatrixXd C_acc = Eigen::MatrixXd::Zero(2 * n_joints_, 6 + n_joints_);
-  Eigen::VectorXd d_min_acc(2 * n_joints_);
-  Eigen::VectorXd d_max_acc(2 * n_joints_);
-  C_acc.rightCols(n_joints_).topRows(n_joints_).diagonal().setConstant(sample_time_);
-  C_acc.rightCols(n_joints_).bottomRows(n_joints_).diagonal().setConstant(std::pow(sample_time_, 2.0) / 2.0);
-  d_min_acc << q_jnt_dot_min - current.qjntdot, q_jnt_min - current.qjnt - sample_time_ * current.qjntdot;
-  d_max_acc << q_jnt_dot_max - current.qjntdot, q_jnt_max - current.qjnt - sample_time_ * current.qjntdot;
-
-  Eigen::MatrixXd M = pinocchio::crba(robot_model, robot_data, q);
-  // We need to do this since the inertia matrix in Pinocchio is only upper triangular
-  M.triangularView<Eigen::StrictlyLower>() = M.transpose().triangularView<Eigen::StrictlyLower>();
-  M.diagonal().tail(n_joints_) += M_armature_;
-
-  // Computing Coriolis, centrifugal and gravitational effects
-  const auto& c = pinocchio::rnea(robot_model, robot_data, q, qdot, Eigen::VectorXd::Zero(6 + n_joints_));
-
-  Eigen::MatrixXd Jlu = J_lsole_.block(0,0,6,6);
-  Eigen::MatrixXd Jla = J_lsole_.block(0,6,6,n_joints_);
-  Eigen::MatrixXd Jru = J_rsole_.block(0,0,6,6);
-  Eigen::MatrixXd Jra = J_rsole_.block(0,6,6,n_joints_);
-
-  Eigen::MatrixXd Mu = M.block(0,0,6,6+n_joints_);
-  Eigen::MatrixXd Ma = M.block(6,0,n_joints_,6+n_joints_);
-
-  Eigen::VectorXd cu = c.block(0,0,6,1);
-  Eigen::VectorXd ca = c.block(6,0,n_joints_,1);
-
-  std::vector<Eigen::Vector3d> pcis(4);
-  pcis[0] <<  params_.foot_length / 2.0,  params_.foot_width / 2.0, 0.0;
-  pcis[1] <<  params_.foot_length / 2.0, -params_.foot_width / 2.0, 0.0;
-  pcis[2] << -params_.foot_length / 2.0,  params_.foot_width / 2.0, 0.0;
-  pcis[3] << -params_.foot_length / 2.0, -params_.foot_width / 2.0, 0.0;
-
-  std::vector<Eigen::Vector3d> pcis_l(4);
-  std::vector<Eigen::Vector3d> pcis_r(4);
-
-  for (int i = 0; i < n_contacts_; ++i) {
-    pcis_l[i] = desired.lsole.pos.R * pcis[i];
-    pcis_r[i] = desired.rsole.pos.R * pcis[i];
-  }
-
-  Eigen::MatrixXd T_l(6, 3 * n_contacts_);
-  Eigen::MatrixXd T_r(6, 3 * n_contacts_);
-  Eigen::Matrix3d I3 = Eigen::Matrix3d::Identity();
-  T_l << I3, I3, I3, I3,
-         pinocchio::skew(pcis_l[0]), pinocchio::skew(pcis_l[1]), pinocchio::skew(pcis_l[2]), pinocchio::skew(pcis_l[3]);
-  T_r << I3, I3, I3, I3,
-         pinocchio::skew(pcis_r[0]), pinocchio::skew(pcis_r[1]), pinocchio::skew(pcis_r[2]), pinocchio::skew(pcis_r[3]);
-
-  Eigen::MatrixXd H_force_one = 1e-9 * Eigen::MatrixXd::Identity(3 * n_contacts_, 3 * n_contacts_);
-  Eigen::VectorXd f_force_one = Eigen::VectorXd::Zero(3 * n_contacts_);
-
-  Eigen::VectorXd b_dyn = -cu;
-
-  Eigen::MatrixXd C_force_block(4, 3);
-  C_force_block <<  1.0,  0.0, -params_.mu,
-                    0.0,  1.0, -params_.mu,
-                   -1.0,  0.0, -params_.mu,
-                    0.0, -1.0, -params_.mu;
-
-  Eigen::VectorXd d_min_force_one = -10000.0 * Eigen::VectorXd::Ones(4 * n_contacts_);
-  Eigen::VectorXd d_max_force_one = Eigen::VectorXd::Zero(4 * n_contacts_);
-
-  Eigen::MatrixXd H = Eigen::MatrixXd::Zero(H_acc.rows() + 2 * H_force_one.rows(), H_acc.cols() + 2 * H_force_one.cols());
-  H.block(0, 0, H_acc.rows(), H_acc.cols()) = H_acc;
-  H.block(H_acc.rows(), H_acc.cols(), H_force_one.rows(), H_force_one.cols()) = H_force_one;
-  H.block(H_acc.rows() + H_force_one.rows(),
-          H_acc.cols() + H_force_one.cols(),
-          H_force_one.rows(),
-          H_force_one.cols()) = H_force_one;
-  Eigen::VectorXd f(f_acc.size() + 2 * f_force_one.size());
-  f << f_acc, f_force_one, f_force_one;
-
-  Eigen::MatrixXd A_acc = Eigen::MatrixXd::Zero(12, 6 + n_joints_);
-  Eigen::VectorXd b_acc = Eigen::VectorXd::Zero(12);
-  Eigen::MatrixXd A_no_contact = Eigen::MatrixXd::Zero(3 * n_contacts_, 2 * 3 * n_contacts_);
-  Eigen::VectorXd b_no_contact = Eigen::VectorXd::Zero(3 * n_contacts_);
-
-  if (current.is_left_foot_support) {
-    A_acc.topRows(6) = J_lsole_;
-    b_acc.topRows(6) = -J_lsole_dot_ * qdot - params_.gamma * J_lsole_ * qdot;
-  }
-  if (current.is_right_foot_support) {
-    A_acc.bottomRows(6) = J_rsole_;
-    b_acc.bottomRows(6) = -J_rsole_dot_ * qdot - params_.gamma * J_rsole_ * qdot;
-  }
-  if (!current.is_left_foot_support) {
-    A_no_contact.block(0, 0, 3 * n_contacts_, 3 * n_contacts_) = Eigen::MatrixXd::Identity(3 * n_contacts_, 3 * n_contacts_);
-  }
-  if (!current.is_right_foot_support) {
-    A_no_contact.block(0, 3 * n_contacts_, 3 * n_contacts_, 3 * n_contacts_) = Eigen::MatrixXd::Identity(3 * n_contacts_, 3 * n_contacts_);
-  }
-
-  Eigen::MatrixXd A_dyn(6, 6 + n_joints_ + 2 * 3 * n_contacts_);
-  A_dyn << Mu, -Jlu.transpose() * T_l, -Jru.transpose() * T_r;
-
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_acc.rows() + A_no_contact.rows() + A_dyn.rows(), n_wbc_variables_);
-  A.block(0, 0, A_acc.rows(), A_acc.cols()) = A_acc;
-  A.block(A_acc.rows(), A_acc.cols(), A_no_contact.rows(), A_no_contact.cols()) = A_no_contact;
-  A.bottomRows(A_dyn.rows()) = A_dyn;
-  Eigen::VectorXd b(b_acc.rows() + b_no_contact.rows() + b_dyn.rows());
-  b << b_acc, b_no_contact, b_dyn;
-
-  Eigen::MatrixXd C_force_left = Eigen::MatrixXd::Zero(4 * n_contacts_, 3 * n_contacts_);
-  for (int i = 0; i < n_contacts_; ++i) {
-    C_force_left.block(4 * i, 3 * i, 4, 3) = C_force_block * current.lsole.pos.R.transpose();
-  }
-  Eigen::MatrixXd C_force_right = Eigen::MatrixXd::Zero(4 * n_contacts_, 3 * n_contacts_);
-  for (int i = 0; i < n_contacts_; ++i) {
-    C_force_right.block(4 * i, 3 * i, 4, 3) = C_force_block * current.rsole.pos.R.transpose();
-  }
-  Eigen::MatrixXd C(C_acc.rows() + 2 * C_force_left.rows(), n_wbc_variables_);
-  C << C_acc, Eigen::MatrixXd::Zero(C_acc.rows(), 2 * 3 * n_contacts_),
-      Eigen::MatrixXd::Zero(C_force_left.rows(), 6 + n_joints_), C_force_left, Eigen::MatrixXd::Zero(C_force_left.rows(), 3 * n_contacts_),
-      Eigen::MatrixXd::Zero(C_force_right.rows(), 6 + n_joints_), Eigen::MatrixXd::Zero(C_force_right.rows(), 3 * n_contacts_), C_force_right;
-  Eigen::VectorXd d_min(d_min_acc.rows() + 2 * d_min_force_one.rows());
-  Eigen::VectorXd d_max(d_max_acc.rows() + 2 * d_max_force_one.rows());
-  d_min << d_min_acc, d_min_force_one, d_min_force_one;
-  d_max << d_max_acc, d_max_force_one, d_max_force_one;
-  //SOLVE THE WBC 
-  wbc_solver_ptr_->solve(H, f, A, b, C, d_min, d_max);
-  Eigen::VectorXd solution = wbc_solver_ptr_->get_solution();
-  Eigen::VectorXd q_ddot = solution.head(6 + n_joints_);
-  Eigen::VectorXd flr = solution.tail(2 * 3 * n_contacts_);
-  Eigen::VectorXd fl = flr.head(3 * n_contacts_);
-  Eigen::VectorXd fr = flr.tail(3 * n_contacts_);
-  Eigen::VectorXd tau = Ma * q_ddot + ca - Jla.transpose() * T_l * fl - Jra.transpose() * T_r * fr;
-
-  // Fine misurazione del tempo
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-
-  // Stampa del tempo di esecuzione
-  std::cout << "Tempo di esecuzione del controllore Whole Body: " << duration << " microsecondi" << std::endl;
-
+  
 
   JointCommand joint_command;
-  for(pinocchio::JointIndex joint_id = 2; joint_id < (pinocchio::JointIndex) robot_model.njoints; ++joint_id) {
-    const auto& joint_name = robot_model.names[joint_id];
-    joint_command[joint_name] = tau[joint_id - 2];
-  }
-  
+
   return joint_command;
 }
+
+  void WholeBodyMPC::eval_codegen(  int (*fname_work)(casadi_int* sz_arg, casadi_int* sz_res, casadi_int* sz_iw, casadi_int* sz_w),
+                    int (*fname)(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem),
+                    const casadi_int* (*fname_sparsity_out)(casadi_int i),
+                    const casadi_real** data_in, qpsolvers::CSCMatrix_params &csc_out){
+
+  casadi_int sz_arg_, sz_res_, sz_iw_, sz_w_;
+  //CSCMatrix_params csc_out;
+
+
+
+  std::cout << "Calculating work size..." << std::endl;
+  int work = fname_work(&sz_arg_, &sz_res_, &sz_iw_, &sz_w_);
+  if (work > 0) {
+    std::cerr << "Error in work size calculation: " << work << std::endl;
+    return;
+  }
+
+  //const casadi_real *arg[*sz_arg_];
+  // Extract the sparsity pattern https://github.com/casadi/casadi/issues/3701
+  
+  const casadi_int* sparsity = fname_sparsity_out(0);
+  const casadi_int* colind = sparsity + 2;
+  
+  csc_out.nrows = sparsity[0];
+  csc_out.ncols = sparsity[1];
+  csc_out.nzeros = sparsity[csc_out.ncols + 2];
+
+  csc_out.row_indices.resize(csc_out.nzeros);
+  csc_out.col_pointers.resize(csc_out.ncols + 1);
+
+  for (casadi_int i = 0; i <= csc_out.ncols; ++i){
+
+    //std::cout << "colind["<< i << "] = " << colind[i] << std::endl;
+    csc_out.col_pointers[i] = colind[i];
+  }
+  const casadi_int* rowind = colind + csc_out.ncols + 1;
+  std::cout << "rowind["<< 0 << "] = " << rowind[0] << std::endl;
+  for (casadi_int i = 0; i < csc_out.nzeros; ++i){
+    //std::cout << "rowind["<< i << "] = " << rowind[i] << std::endl;
+    csc_out.row_indices[i] = rowind[i];  
+  }
+
+  csc_out.data.resize(csc_out.nzeros);
+  casadi_real *res[sz_res_] = {csc_out.data.data()};
+  casadi_int iw[sz_iw_];
+  casadi_real w[sz_w_];
+
+  const casadi_real* arg[sz_arg_];
+
+  //casadi_real* res[1];
+  //res[0] = csc_out.data.data();
+  //arg = data_in;
+  //std::cout << "Data in size: " << sz_arg_ << std::endl;
+  int eval = fname(data_in, res, iw, w,0);
+  
+
+  if (eval > 0) {
+    std::cerr << "Error in evaluation: " << eval << std::endl;
+    return;
+  } 
+
+  // for(int i = 0; i < csc_out.nzeros; ++i){
+  //   std::cout << "data " << i << ": " << csc_out.data[i] << std::endl;
+  // };
+  std::cout<< "End of eval" << std::endl;
+}
+
+  void WholeBodyMPC::update_weight_Hessian(WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force){
+  //wbnmpc_solver_ptr_->solve_CSC()
+  //int size = num_q + num_v +
+    int num_var = num_q+num_v+num_force+num_torque;// var per step
+    int num_qj = num_q -7;
+    int num_vj = num_v -6;
+    int num_q_v = num_q + num_v;
+    std::cout << "Updating weight structure..." << std::endl;
+    std::cout << "num_q: " << num_q << std::endl;
+    std::cout << "num_v: " << num_v << std::endl;
+    std::cout << "num_vars: " << num_var << std::endl;
+    //int num_q_v_f = num_q_v + num_force_step;
+    Eigen::VectorXd diag = Eigen::VectorXd::Zero(n_wbnmpc_variables_);
+
+    for (int i = 0; i < N_; i++) {
+        int offset = i * num_q;
+        // q
+        diag.segment(offset, 3).setConstant(params.weight_com);             // COM (3)
+        diag.segment(offset + 3, 4).setConstant(params.weight_torso);       // Torso (4)
+        diag.segment(offset + 7, num_qj).setConstant(params.weight_general_qj); // Joints qj
+    }
+    for (int i = 0; i < N_; i++){
+        // v
+        int v_off =  (N_+1)*num_q + i*num_v;
+        diag.segment(v_off, 3).setConstant(params.weight_general_vb);       // Linear vel
+        diag.segment(v_off + 3, 3).setConstant(params.weight_general_omega_b); // Angular vel
+        diag.segment(v_off + 6, num_vj).setConstant(params.weight_general_v);   // Joint v
+    }
+    for (int i = 0; i < 4*N_; i++) {
+        // forces (each contact: XY(2) + Z(1))
+        int f_off =  (N_+1)*num_q_v + i*3;// one force includes x, y, z, i.e 3 components
+         // 4 contacts: heel/toe left/right
+            diag.segment(f_off, 2).setConstant(params.weight_contact_force_xy);// 3 is the size of each contact force vector
+            diag(f_off + 2) = params.weight_contact_force_z;//2 is the offset caused by x,y components
+        
+    }
+    std::cout << "Weight diag: \n" << diag.transpose() << std::endl;    
+
+        // torques (uncomment if needed)
+        // int tau_off = offset + num_q_v + num_force;
+        // diag.segment(tau_off, num_torque).setConstant(params.weight_torque);
+
+    // build diagonal matrix (if solver really needs a full MatrixXd)
+    Eigen::MatrixXd P = diag.asDiagonal();
+    std::cout << "Write Weight matrix P to file: \n" << std::endl;
+    std::ofstream Weight_dense("Weight_P.txt");
+    
+    if (Weight_dense.is_open()) {
+      Weight_dense << "Weight_P:\n";
+      for (int i = 0; i < P.rows(); ++i) {
+        for (int j = 0; j < P.cols(); ++j) {
+            Weight_dense << std::fixed << std::setprecision(6) 
+                         << std::setw(10) << P(i, j);
+        }
+        Weight_dense << "\n";
+      }
+    }
+    P_ = qpsolvers::denseToCSC_param( P.data(), P.rows(), P.cols() );
+  }
+
+  void WholeBodyMPC::update_weigtht_Jacobian(WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force){
+    int num_var = num_q+num_v+num_force+num_torque;// var per step
+    int num_qj = num_q -7;
+    int num_vj = num_v -6;
+    int num_q_v = num_q + num_v;
+    std::cout << "Updating weight structure for Jacobian..." << std::endl;
+    std::cout << "num_q: " << num_q << std::endl;
+    std::cout << "num_v: " << num_v << std::endl;
+    std::cout << "num_vars: " << num_var << std::endl;
+    //int num_q_v_f = num_q_v + num_force_step;
+    for (int i = 0; i < N_; i++){
+     int offset = i * num_q;
+        // q terms
+        g_.segment(offset, 3) = params.weight_com *
+            (guess_vars_.q_sol.segment(offset, 3) - desired_vars_.q_sol.segment(offset, 3));
+
+        g_.segment(offset + 3, 4) = params.weight_torso *
+            (guess_vars_.q_sol.segment(offset + 3, 4) - desired_vars_.q_sol.segment(offset + 3, 4));
+
+        g_.segment(offset + 7, num_qj) = params.weight_general_qj *
+            (guess_vars_.q_sol.segment(offset + 7, num_qj) - desired_vars_.q_sol.segment(offset + 7, num_qj));
+    }
+        // v terms
+    for (int i = 0; i < N_; i++){
+        int v_off = (N_+1)*num_q + i*num_v;
+        int var_v_off = i*num_v;
+
+        g_.segment(v_off, 3) = params.weight_general_vb *
+            (guess_vars_.v_sol.segment(var_v_off, 3) - desired_vars_.v_sol.segment(var_v_off, 3));
+
+        g_.segment(v_off + 3, 3) = params.weight_general_omega_b *
+            (guess_vars_.v_sol.segment(var_v_off + 3, 3) - desired_vars_.v_sol.segment(var_v_off + 3, 3));
+
+        g_.segment(v_off + 6, num_vj) = params.weight_general_v *
+            (guess_vars_.v_sol.segment(var_v_off + 6, num_vj) - desired_vars_.v_sol.segment(var_v_off + 6, num_vj));
+    }
+        // forces
+    for (int i = 0; i < 2*N_; i++) { // 2 contacts per step (each foot)
+        int fl_off = (N_+1)*num_q_v + i*3;
+        int fr_off = (N_+1)*num_q_v + N_*6 +i*3; // second foot offset
+
+            // XY part
+            g_.segment(fl_off, 2) = params.weight_contact_force_xy *
+                (guess_vars_.F_lsole_sol.segment(i*3, 2) - desired_vars_.F_lsole_sol.segment(i*3, 2));
+
+            // Z part (scalar)
+            g_(fl_off + 2) = params.weight_contact_force_z *
+                (guess_vars_.F_lsole_sol(i*3 + 2) - desired_vars_.F_lsole_sol(i*3 + 2));
+
+            // Right foot
+            g_.segment(fr_off, 2) = params.weight_contact_force_xy *
+                (guess_vars_.F_rsole_sol.segment(i*3, 2) - desired_vars_.F_rsole_sol.segment(i*3, 2));
+            g_(fr_off + 2) = params.weight_contact_force_z *
+                (guess_vars_.F_rsole_sol(i*3 + 2) - desired_vars_.F_rsole_sol(i*3 + 2));
+    }  
+    
+  }
+
+  void WholeBodyMPC::update_CoM_desired( int64_t t_msec, const labrob::WalkingData& walking_data, vars_WBNMPC &desired_vars){
+    
+  }
+
+    
 
 } // end namespace labrob

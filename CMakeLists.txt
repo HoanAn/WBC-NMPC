@@ -44,6 +44,7 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WalkingState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WholeBodyController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WBNMPC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/eval_codegen_func.cpp
 )
 
 target_include_directories(WalkingControllerLibrary

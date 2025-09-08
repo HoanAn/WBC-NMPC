@@ -63,6 +63,14 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   );
   // Define the locked joints in the constant string "joints_to_lock_names" 
   //for the pinocchio robot model to build a reduced model.
+//   const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
+//                                                      "left_wrist_roll_joint",
+//                                                      "left_wrist_yaw_joint",
+//                                                      "right_wrist_pitch_joint",
+//                                                      "right_wrist_roll_joint",
+//                                                      "right_wrist_yaw_joint",
+//                                                      "left_hip_yaw_joint",
+//                                                       "right_hip_yaw_joint"};
   const std::vector<std::string> joint_to_lock_names{};
   std::vector<pinocchio::JointIndex> joint_ids_to_lock;
   for (const auto& joint_name : joint_to_lock_names) {
@@ -135,12 +143,13 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   // TODO: init using node handle.
   controller_frequency_ = 600;
   controller_timestep_msec_ = 1000 / controller_frequency_;
+  std::cout<< "controller_timestep_msec_: " << controller_timestep_msec_ << std::endl;
 
   double swing_foot_trajectory_height = 0.1;
   double step_length_x = 0.15;
   double step_length_y = 0.0;
   double step_rotation = 0.0;
-  int n_steps = 10;
+  int n_steps = 20;
   walking_data_.footstep_plan.push_back(labrob::FootstepPlanElement(
       labrob::DoubleSupportConfiguration(
           labrob::SE3(T_lsole_init.rotation(), T_lsole_init.translation()),
@@ -285,13 +294,24 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   );
 
   auto WBMPC_params = WholeBodyMPCParams::getDefaultParams();
+
+    std::cout << "init WBMPC" << std::endl;
   whole_body_MPC_ptr_ = std::make_shared<WholeBodyMPC>(
       WBMPC_params,
       robot_model_,
       q_jnt_des_,
       0.001 * controller_timestep_msec_,
+      5,
       armatures
   );
+
+ whole_body_MPC_ptr_->update_first_guess(
+      robot_model_,
+      robot_data_,
+      q_init,
+      5
+  );
+  
 
   // Init discrete LIP dynamics:
   discrete_lip_dynamics_ptr_ = std::make_unique<labrob::DiscreteLIPDynamics>(
@@ -440,6 +460,9 @@ WalkingManager::update(
         pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED,
         J_torso
     );
+
+    std::cout << "CoM position from robot_data: " << p_CoM.transpose() << std::endl;
+    std::cout << "CoM position from q"  << q.head(3) << std::endl;
 
     // auto J_torso_orientation = J_torso.bottomRows<3>();
     // Eigen::MatrixXd J_torso_dot = Eigen::MatrixXd::Zero(6, robot_model_.nv);
@@ -643,13 +666,16 @@ WalkingManager::update(
         current_gait_configuration,
         desired_gait_configuration
     );
+    //std::cout << "HPIPM torque command: " << joint_command << std::endl;
 
     labrob::JointCommand joint_command2 = whole_body_MPC_ptr_->compute_inverse_dynamics(
         robot_model_,
         robot_state,
         robot_data_,
         current_gait_configuration,
-        desired_gait_configuration
+        desired_gait_configuration,
+        t_msec_, 
+        walking_data_
     );
 
 
@@ -664,6 +690,7 @@ WalkingManager::update(
     // NOTE: assuming update() is actually called every controller_timestep_msec_
     //       milliseconds.
     t_msec_ += controller_timestep_msec_;
+    std::cout << "t_msec_: " << t_msec_ << std::endl;
     prev_angular_momentum_ = angular_momentum;
 
 

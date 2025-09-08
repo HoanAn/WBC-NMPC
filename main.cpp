@@ -200,7 +200,7 @@ int main() {
 
     mjtNum simstart = mj_data_ptr->time;
     while( mj_data_ptr->time - simstart < 1.0/framerate ) {
-      
+      std::cout << " Simulation Time between update: " << mj_data_ptr->time << std::endl;
       labrob::RobotState robot_state = robot_state_from_mujoco(mj_model_ptr, mj_data_ptr);
 
       // Update walking manager:

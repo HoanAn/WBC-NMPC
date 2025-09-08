@@ -6,6 +6,12 @@
 // OSQP
 #include "osqp.h"
 #include <iostream>
+#include <casadi/casadi.hpp>
+
+#include "hrp4_locomotion/eval_codegen_func.h"
+#include "hrp4_locomotion/utils.hpp"
+
+
 
 namespace labrob {
 namespace qpsolvers {
@@ -13,7 +19,7 @@ namespace qpsolvers {
 
 class OSQPSolver : public QPSolver<double> {
  public:
-  OSQPSolver(int numVariables, int numEqualityConstraints, int numInequalityConstraints) :
+  OSQPSolver(int numVariables, int numEqualityConstraints, int numInequalityConstraints,CSCMatrix_params& P_params) :
     QPSolver<double>(numVariables, numEqualityConstraints, numInequalityConstraints)
   {
     const int numConstraints = numEqualityConstraints + numInequalityConstraints;
@@ -24,64 +30,58 @@ class OSQPSolver : public QPSolver<double> {
     solve_flag_ = 1;
     qp_setting_ = OSQPSettings_new();
 
-    P_ = OSQPCscMatrix_identity(numVariables); // Initialize an identity matrix for P
+    //P_ = OSQPCscMatrix_identity(numVariables); // Initialize an identity matrix for P
+    P_ = OSQPCscMatrix_new(P_params.nrows, P_params.ncols, P_params.nzeros,
+                           P_params.data.data(), P_params.row_indices.data(), P_params.col_pointers.data());
 
-    // OSQPFloat* A_x = (OSQPFloat*) malloc((numConstraints*numVariables) * sizeof(OSQPFloat));
-    // OSQPInt* A_index = (OSQPInt*) malloc((numConstraints+numVariables) * sizeof(OSQPInt));
-    // OSQPInt* A_ptr = (OSQPInt*) malloc((numVariables + 1) * sizeof(OSQPInt));
-    // OSQPInt A_nnz = numConstraints*numVariables;
+    //CSCMatrix_params csc_params_A_init = denseToCSC_param(A_init.data(), numConstraints, numVariables);
+    // OSQp fix the sparsity structure while runtime solving. Thus, this code initlize the fixed sparsity structure
+    // for the solver's internal matrices. The data is taken from the Casadi codegen function.
+    CSCMatrix_params csc_params_A_init;
+    const casadi_int * A_sparsity = Jacob_f_total_constraint_sparsity_out(0);
+    const casadi_int * A_colind = A_sparsity + 2;
 
-    Eigen::MatrixXd A_init(numConstraints, numVariables);
-
-    A_init << 1, 0, 0, 0,
-              1, 1, 1, 1,
-              2, 2, 2, 2;
-
+    csc_params_A_init.nrows = A_sparsity[0];
+    csc_params_A_init.ncols = A_sparsity[1];
+    csc_params_A_init.nzeros = A_sparsity[csc_params_A_init.ncols + 2];
     
+    csc_params_A_init.row_indices.resize(csc_params_A_init.nzeros);
+    csc_params_A_init.col_pointers.resize(csc_params_A_init.ncols + 1);
 
-    //A_init.setOnes(); // Initialize A with ones
-    for (int i= 0; i< numConstraints* numVariables; ++i) {
-      std::cerr << "A_init[" << i << "] = " << A_init.data()[i] << std::endl;
+    csc_params_A_init.data.resize(csc_params_A_init.nzeros);
+
+    for (casadi_int i = 0; i <= csc_params_A_init.ncols; ++i){
+      csc_params_A_init.col_pointers[i] = A_colind[i];
     }
-    CSCMatrix_params csc_params_A_init = denseToCSC_param(A_init.data(), numConstraints, numVariables);
+
+    const casadi_int* A_rowind = A_colind + csc_params_A_init.ncols+1;
+
+
+    for (casadi_int i = 0; i < csc_params_A_init.nzeros; ++i){
+      csc_params_A_init.row_indices[i] = A_rowind[i];  
+      csc_params_A_init.data[i] = 1.0; // Just for initializing, set all data to 1.0
+      if (i == 0 ) std::cout << "A_rowind [0]: "<< A_rowind[i] << std::endl;
+      if (i == csc_params_A_init.nzeros -1 ) std::cout << "A_rowind [" << i << "]: " << A_rowind[i] << std::endl; 
+    }
+    // For convert the codegen data, refer to this: https://github.com/casadi/casadi/issues/3701
+
 
     std::cerr << "Row paramA_: " << csc_params_A_init.nrows << std::endl;
     std::cerr << "Col paramA_: " << csc_params_A_init.ncols << std::endl;
     std::cerr << "Nzeros paramA_: " << csc_params_A_init.nzeros << std::endl;
   
-    std::cerr << "Data paramA_: ";
-    for(int i = 0; i < csc_params_A_init.nzeros; ++i) {
-      std::cerr << "paramA_[" << i << "] = " << csc_params_A_init.data[i] << std::endl;
-    }
     
-    for(int i = 0; i < csc_params_A_init.nzeros; ++i) {
-      std::cerr << "param A_row[" << i << "] = " << csc_params_A_init.row_indices[i] << std::endl;
-    }
-    
-    for(int i = 0; i < numVariables+1; ++i) {
-      std::cerr << "param A_colp[" << i << "] = " << csc_params_A_init.col_pointers[i] << std::endl;
-    }
-
     A_ = OSQPCscMatrix_new(csc_params_A_init.nrows, csc_params_A_init.ncols,csc_params_A_init.nzeros,
-                           csc_params_A_init.data, csc_params_A_init.row_indices, csc_params_A_init.col_pointers);
+                           csc_params_A_init.data.data(), csc_params_A_init.row_indices.data(), csc_params_A_init.col_pointers.data());
 
     std::cerr << "Done initilize A_"<< std::endl;
     std::cerr << "Row A_: " << A_->m << std::endl;
     std::cerr << "Col A_: " << A_->n << std::endl;
     std::cerr << "Nzeros A_: " << A_->nzmax << std::endl;
-  
-    std::cerr << "Data A_: ";
-    for(int i = 0; i < A_->nzmax; ++i) {
-      std::cerr << "A_[" << i << "] = " << A_->x[i] << std::endl;
-    }
-    std::cerr << "Row indices A_: ";
-    for(int i = 0; i < A_->nzmax; ++i) {
-      std::cerr << "A_i[" << i << "] = " << A_->i[i] << std::endl;
-    }
-    std::cerr << "Col pointers A_: " << A_->p << std::endl;
     std::cerr << "Done initilize A_ with size: " << numConstraints << "x" << numVariables << std::endl;
-    //A_ = OSQPCscMatrix_zeros(numConstraints, numVariables); // Initialize a zero matrix for A
+   
     q_  = (OSQPFloat*) malloc(numVariables * sizeof(OSQPFloat)); 
+    
     
     for (int i = 0; i < numVariables; ++i) {
       q_[i] = 0.0; // Initialize q to zero
@@ -106,6 +106,7 @@ class OSQPSolver : public QPSolver<double> {
       std::cerr << "OSQP setup failed with error code: " << solve_flag_ << std::endl;
       exit(EXIT_FAILURE);
     }
+    std::cerr << "Done setting up QP solver"<< std::endl;
     u_ = (double*) malloc(numVariables * sizeof(double));
   
   }
@@ -182,8 +183,8 @@ class OSQPSolver : public QPSolver<double> {
 
     // Update OSQPCscMatrix for P and A
     OSQPInt update_mat_flag = osqp_update_data_mat(qp_solver_,
-                                        csc_params_H.data,OSQP_NULL,csc_params_H.nzeros,
-                                        csc_params_A.data,csc_params_A.row_indices,csc_params_A.nzeros);
+                                        csc_params_H.data.data(),OSQP_NULL,csc_params_H.nzeros,
+                                        csc_params_A.data.data(),csc_params_A.row_indices.data(),csc_params_A.nzeros);
 
     OSQPInt update_vec_flag = osqp_update_data_vec(qp_solver_,
                                         (OSQPFloat*) f, (OSQPFloat*) d_min_OSQP.data(), (OSQPFloat*) d_max_OSQP.data());                                       
@@ -204,81 +205,130 @@ class OSQPSolver : public QPSolver<double> {
 
     u_ = qp_solver_->solution->x; // Get the solution vector
 
-    free_csc_params(csc_params_H);
-    free_csc_params(csc_params_A);
+    // free_csc_params(csc_params_H);
+    // free_csc_params(csc_params_A);
 
   
   }
+
+  void solve_CCS( 
+    const CSCMatrix_params& P,
+    const double * f,
+    const CSCMatrix_params& A,
+    const double* d_min,
+    const double* d_max) override {
+
+
+    // Update OSQPCscMatrix for P and A
+    //const CSCMatrix_params P_new = *P;
+    OSQPInt update_mat_flag = osqp_update_data_mat(qp_solver_,
+                                        P.data.data(),OSQP_NULL,P.nzeros,
+                                        A.data.data(),OSQP_NULL,A.nzeros);
+
+    OSQPInt update_vec_flag = osqp_update_data_vec(qp_solver_,
+                                        (OSQPFloat*) f, (OSQPFloat*) d_min, (OSQPFloat*) d_max);                                       
+
+   
+    if (update_mat_flag != 0 || update_vec_flag != 0) {
+      std::cerr << "OSQP update failed with error code: " << update_mat_flag << ", " << update_vec_flag << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    // Solve OSQP problem
+    std::cerr << "Solver info: "<< qp_solver_->info << std::endl;
+    OSQPInt solve_flag_ = osqp_solve(qp_solver_);
+
+    if( solve_flag_ != 0) {
+      std::cerr << "OSQP solve failed with error code: " << solve_flag_ << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    u_ = qp_solver_->solution->x; // Get the solution vector
+
+    // free_csc_params(csc_params_H);
+    // free_csc_params(csc_params_A);
+
+
+
+
+    };
+
+  
 
   const double* get_solution() const override {
     return u_;
   }
 
+  //OSQPCscMatrix *P_;// Pointer to the CSC matrix for the quadratic term in the cost function
+  
+  // void update_weight_terms( WholeBodyMPCParams params ){
+
+  // };
+
  private:
   // Define a structure for the CSC matrix
-  struct CSCMatrix_params {
-    OSQPInt nrows;              // Number of rows
-    OSQPInt ncols;              // Number of columns
-    OSQPInt nzeros;             // Non-zero values
-    OSQPFloat* data;            // Vector of data
-    OSQPInt*   row_indices;     // Vector of row indices
-    OSQPInt*   col_pointers;    // Column pointers (start of each column in values array)
-  };
+//   struct CSCMatrix_params_qp {
+//     OSQPInt nrows;              // Number of rows
+//     OSQPInt ncols;              // Number of columns
+//     OSQPInt nzeros;             // Non-zero values
+//     OSQPFloat* data;            // Vector of data
+//     OSQPInt*   row_indices;     // Vector of row indices
+//     OSQPInt*   col_pointers;    // Column pointers (start of each column in values array)
+//   };
 
  
-  // Function to convert a dense matrix to CSC format and create an OSQPCscMatrix
-  CSCMatrix_params denseToCSC_param(const double* H, int nrows, int ncols) {
-    // Vectors to store CSC data
-    CSCMatrix_params params;
-    std::cerr << "Extracting CSC params: "<< std::endl;
-    params.nrows = nrows;
-    params.ncols = ncols;
+//   // Function to convert a dense matrix to CSC format and create an OSQPCscMatrix
+//   CSCMatrix_params_qp denseToCSC_param(const double* H, int nrows, int ncols) {
+//     // Vectors to store CSC data
+//     CSCMatrix_params_qp params;
+//     std::cerr << "Extracting CSC params: "<< std::endl;
+//     params.nrows = nrows;
+//     params.ncols = ncols;
 
-    std::vector<double> values;     // Non-zero values
-    std::vector<int> row_indices;  // Row indices of non-zero values
-    std::vector<int> col_pointers(ncols + 1, 0); // Column pointers
+//     std::vector<double> values;     // Non-zero values
+//     std::vector<int> row_indices;  // Row indices of non-zero values
+//     std::vector<int> col_pointers(ncols + 1, 0); // Column pointers
 
-    // Iterate through the dense matrix to populate CSC arrays
-    for (int col = 0; col < ncols; ++col) {
-        col_pointers[col] = values.size(); // Start of the current column
-        for (int row = 0; row < nrows; ++row) {
-            double value = H[row + col * nrows]; // Access element in column-major order
-            if (value != 0.0) {
-                values.push_back(value);       // Store non-zero value
-                row_indices.push_back(row);   // Store row index
-            }
-        }
-    }
-    col_pointers[ncols] = values.size(); // End of the last column
+//     // Iterate through the dense matrix to populate CSC arrays
+//     for (int col = 0; col < ncols; ++col) {
+//         col_pointers[col] = values.size(); // Start of the current column
+//         for (int row = 0; row < nrows; ++row) {
+//             double value = H[row + col * nrows]; // Access element in column-major order
+//             if (value != 0.0) {
+//                 values.push_back(value);       // Store non-zero value
+//                 row_indices.push_back(row);   // Store row index
+//             }
+//         }
+//     }
+//     col_pointers[ncols] = values.size(); // End of the last column
 
-    // Allocate memory for CSC arrays
+//     // Allocate memory for CSC arrays
     
-    params.data = (OSQPFloat*)malloc(values.size() * sizeof(OSQPFloat));
-    params.row_indices = (OSQPInt*)malloc(row_indices.size() * sizeof(OSQPInt));
-    params.col_pointers = (OSQPInt*)malloc(col_pointers.size() * sizeof(OSQPInt));
+//     params.data = (OSQPFloat*)malloc(values.size() * sizeof(OSQPFloat));
+//     params.row_indices = (OSQPInt*)malloc(row_indices.size() * sizeof(OSQPInt));
+//     params.col_pointers = (OSQPInt*)malloc(col_pointers.size() * sizeof(OSQPInt));
 
-    // Copy data from vectors to allocated arrays
-    std::cerr << "Copy data from vectors to allocated arrays: "<< std::endl;
-    std::copy(values.begin(), values.end(), params.data);
-    std::cerr << "Is it fault here 1: "<< std::endl;
-    std::copy(row_indices.begin(), row_indices.end(), params.row_indices);
-    std::cerr << "Is it fault here 2: "<< std::endl;
-    std::copy(col_pointers.begin(), col_pointers.end(), params.col_pointers);
+//     // Copy data from vectors to allocated arrays
+//     std::cerr << "Copy data from vectors to allocated arrays: "<< std::endl;
+//     std::copy(values.begin(), values.end(), params.data);
+//     std::cerr << "Is it fault here 1: "<< std::endl;
+//     std::copy(row_indices.begin(), row_indices.end(), params.row_indices);
+//     std::cerr << "Is it fault here 2: "<< std::endl;
+//     std::copy(col_pointers.begin(), col_pointers.end(), params.col_pointers);
 
-    params.nzeros = values.size(); // Number of non-zero elements
+//     params.nzeros = values.size(); // Number of non-zero elements
     
     
 
-    return params;
-}
+//     return params;
+// }
   // Function to free the CSC params
   void free_csc_params(CSCMatrix_params& p) {
-    if (p.data) free(p.data);
-    if (p.row_indices) free(p.row_indices);
-    if (p.col_pointers) free(p.col_pointers);
-    p.data = nullptr; // Set to nullptr to prevent double-free
-    p.row_indices = nullptr;
-    p.col_pointers = nullptr;
+    // if (p.data.data()) free(p.data.data());
+    // if (p.row_indices.data()) free(p.row_indices.data());
+    // if (p.col_pointers.data()) free(p.col_pointers.data());
+    // p.data.data() = nullptr; // Set to nullptr to prevent double-free
+    // p.row_indices.data() = nullptr;
+    // p.col_pointers.data() = nullptr;
 }
   
 

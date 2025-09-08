@@ -92,6 +92,16 @@ class HPIPMQPSolver : public QPSolver<double> {
     //std::cout << "Status = " << workspace_.status << std::endl;
   }
 
+  void solve_CCS(
+      const CSCMatrix_params& H,
+      const double* g,
+      const CSCMatrix_params& A,
+      const double* d_min,
+      const double* d_max){
+    // Not implemented
+   
+  }
+
   const double* get_solution() const override {
     return u_;
   }

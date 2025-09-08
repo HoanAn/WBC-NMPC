@@ -22,7 +22,7 @@
 
 #include <casadi/casadi.hpp>
 
-#include <labrob_qpsolvers/qpsolvers.hpp>
+//#include <labrob_qpsolvers/qpsolvers.hpp>
 
 
 namespace labrob {

@@ -44,6 +44,26 @@ class QPSolverEigenWrapper {
     );
   }
 
+  template <typename DerivedCostg,
+            typename DerivedIneqg>
+
+  void solve_CCS(
+      const CSCMatrix_params& H,
+      const Eigen::PlainObjectBase<DerivedCostg>& g,
+      const CSCMatrix_params& A,
+      const Eigen::PlainObjectBase<DerivedIneqg>& lg,
+      const Eigen::PlainObjectBase<DerivedIneqg>& ug) {
+    qp_solver_ptr_->solve_CCS(
+        H,
+        g.data(),
+        A,
+        lg.data(),
+        ug.data()
+    );
+  }
+
+
+
   Eigen::Matrix<Scalar, Eigen::Dynamic, 1>
   get_solution() {
     const auto* solution_ptr = qp_solver_ptr_->get_solution();

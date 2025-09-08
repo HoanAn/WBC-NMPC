@@ -38,6 +38,8 @@
 
 #include <hrp4_locomotion/utils.hpp>
 
+//#include <hrp4_locomotion/eval_codegen_func.h>
+
 
 // Eigen
 // #include <Eigen/Core>
@@ -48,10 +50,11 @@
 
 
 namespace labrob {
-
+using namespace casadi;
 using CasadiData = pinocchio::DataTpl<casadi::SX>;
 using CasadiModel = pinocchio::ModelTpl<casadi::SX>;
-using namespace casadi;
+using CasadiMotion = pinocchio::MotionTpl<casadi::SX>;
+
 
 using Ca_ConfigVector = CasadiData::ConfigVectorType;
 using Ca_TangentVector = CasadiData::TangentVectorType;
@@ -79,7 +82,8 @@ struct WholeBodyMPCParams {
   double weight_general_omega_b;
   double weight_general_v; //generalized velocity v = [vb ; \omega_b, \dot q_j]
   
-  double weight_contact_force;
+  double weight_contact_force_xy;
+  double weight_contact_force_z;
   //
   double cmm_selection_matrix_x;
   double cmm_selection_matrix_y;
@@ -95,12 +99,23 @@ struct WholeBodyMPCParams {
   static WholeBodyMPCParams getDefaultParams();
 };
 
+struct vars_WBNMPC {
+  Eigen::VectorXd q_sol;
+  Eigen::VectorXd v_sol;
+  Eigen::VectorXd F_lsole_sol;
+  Eigen::VectorXd F_rsole_sol;
+  Eigen::VectorXd tau_sol;
+
+  //Or it has to be std::vector
+};
+
 class WholeBodyMPC {
  public:
   WholeBodyMPC(const WholeBodyMPCParams& params,
                             const pinocchio::Model& robot_model,
                             const Eigen::VectorXd& q_jnt_reg,
                             double sample_time,
+                            int N,
                             std::map<std::string, double>& armature);
 
   labrob::JointCommand
@@ -109,10 +124,32 @@ class WholeBodyMPC {
       const labrob::RobotState& robot_state,
       pinocchio::Data& robot_data,
       const labrob::GaitConfiguration& current,
-      const labrob::GaitConfiguration& desired
+      const labrob::GaitConfiguration& desired,
+      int64_t t_msec,
+      const labrob::WalkingData& walking_data
+
   );
 
+  void update_first_guess(const pinocchio::Model& robot_model,
+      pinocchio::Data& robot_data,
+      const Eigen::VectorXd& q_init, 
+      const int prediction_horizon);
+  
+
+
  private:
+
+  void eval_codegen(  int (*fname_work)(casadi_int* sz_arg, casadi_int* sz_res, casadi_int* sz_iw, casadi_int* sz_w),
+                    int (*fname)(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem),
+                    const casadi_int* (*fname_sparsity_out)(casadi_int i),
+                    const casadi_real** data_in, qpsolvers::CSCMatrix_params &csc_out);
+
+  void update_weight_Hessian (WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force);
+  void update_weigtht_Jacobian (WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force);
+
+  void update_CoM_desired( int64_t t_msec, const labrob::WalkingData& walking_data, vars_WBNMPC &desired_vars);
+
+  
   pinocchio::Model robot_model_;
   pinocchio::Data robot_data_;
 
@@ -133,20 +170,39 @@ class WholeBodyMPC {
 
   Eigen::VectorXd q_jnt_reg_;
 
-  double sample_time_;
+  double dynamic_discretization_time_;
 
   WholeBodyMPCParams params_;
 
   Eigen::VectorXd M_armature_;
 
+  int N_; // Predicted horizon length
+
   int n_joints_;
   int n_contacts_;
-  int n_wbc_variables_;
-  int n_wbc_equalities_;
-  int n_wbc_inequalities_;
+  int n_wbnmpc_variables_;
+  int n_wbnmpc_equalities_;
+  int n_wbnmpc_inequalities_;
 
-  std::unique_ptr<qpsolvers::QPSolverEigenWrapper<double>> wbc_solver_ptr_;
-  Function eval_Jacob_rnea_;
+  vars_WBNMPC guess_vars_;
+  vars_WBNMPC solution_vars_;
+  vars_WBNMPC desired_vars_;
+
+  std::vector<double> Gamma_vec_;
+
+  casadi_real* cs_constraint_out_[1];
+  casadi_real* cs_Jacob_constraint_out_[1];
+
+  qpsolvers::CSCMatrix_params csc_constraint_;
+  qpsolvers::CSCMatrix_params csc_Jacob_constraint_;
+  qpsolvers::CSCMatrix_params P_;// Cost Hessian
+
+  Eigen::VectorXd g_;// Cost Jacobian
+
+
+
+  std::unique_ptr<qpsolvers::QPSolverEigenWrapper<double>> wbnmpc_solver_ptr_;
+  Function eval_Jacob_f_total_constraint_;
 };
 
 }

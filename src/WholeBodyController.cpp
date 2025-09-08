@@ -332,6 +332,7 @@ WholeBodyController::compute_inverse_dynamics(
   Eigen::VectorXd fr = flr.tail(3 * n_contacts_);
   Eigen::VectorXd tau = Ma * q_ddot + ca - Jla.transpose() * T_l * fl - Jra.transpose() * T_r * fr;
 
+  //std::cout << "HPIPM torque solution: \n" << tau.transpose() << std::endl;
   // Fine misurazione del tempo
   auto end_time = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
