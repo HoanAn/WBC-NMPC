@@ -221,6 +221,7 @@ WholeBodyController::compute_inverse_dynamics(
   const auto& c = pinocchio::rnea(robot_model, robot_data, q, qdot, Eigen::VectorXd::Zero(6 + n_joints_));
 
   Eigen::MatrixXd Jlu = J_lsole_.block(0,0,6,6);
+  //std::cout << "Jlu: \n" << Jlu << std::endl;
   Eigen::MatrixXd Jla = J_lsole_.block(0,6,6,n_joints_);
   Eigen::MatrixXd Jru = J_rsole_.block(0,0,6,6);
   Eigen::MatrixXd Jra = J_rsole_.block(0,6,6,n_joints_);
@@ -253,6 +254,7 @@ WholeBodyController::compute_inverse_dynamics(
   T_r << I3, I3, I3, I3,
          pinocchio::skew(pcis_r[0]), pinocchio::skew(pcis_r[1]), pinocchio::skew(pcis_r[2]), pinocchio::skew(pcis_r[3]);
 
+  //std:: cout << "T_l: \n" << T_l << std::endl;
   Eigen::MatrixXd H_force_one = 1e-9 * Eigen::MatrixXd::Identity(3 * n_contacts_, 3 * n_contacts_);
   Eigen::VectorXd f_force_one = Eigen::VectorXd::Zero(3 * n_contacts_);
 
@@ -332,7 +334,7 @@ WholeBodyController::compute_inverse_dynamics(
   Eigen::VectorXd fr = flr.tail(3 * n_contacts_);
   Eigen::VectorXd tau = Ma * q_ddot + ca - Jla.transpose() * T_l * fl - Jra.transpose() * T_r * fr;
 
-  //std::cout << "HPIPM torque solution: \n" << tau.transpose() << std::endl;
+  std::cout << "HPIPM torque solution: \n" << tau.transpose() << std::endl;
   // Fine misurazione del tempo
   auto end_time = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
@@ -340,11 +342,12 @@ WholeBodyController::compute_inverse_dynamics(
   // Stampa del tempo di esecuzione
   std::cout << "Tempo di esecuzione del controllore Whole Body: " << duration << " microsecondi" << std::endl;
 
-
+  //std::cout << "HPIPM torque solution: \n";
   JointCommand joint_command;
   for(pinocchio::JointIndex joint_id = 2; joint_id < (pinocchio::JointIndex) robot_model.njoints; ++joint_id) {
     const auto& joint_name = robot_model.names[joint_id];
     joint_command[joint_name] = tau[joint_id - 2];
+    //std::cout << "Joint: " << joint_name << " Command: " << joint_command[joint_name] << std::endl;
   }
   
   return joint_command;

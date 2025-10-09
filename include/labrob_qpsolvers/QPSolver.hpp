@@ -122,7 +122,7 @@ inline CSCMatrix_params denseToCSC_param(const double* H, int nrows, int ncols, 
 inline Eigen::VectorXd cscToDenseVector(const CSCMatrix_params& csc) {
     Eigen::VectorXd dense(csc.nrows * csc.ncols);
     dense.setZero();
-    std::cout << "Converting CSC to dense matrix (" <<csc.nrows <<"," <<csc.ncols<<")" << std::endl;
+    //std::cout << "Converting CSC to dense matrix (" <<csc.nrows <<"," <<csc.ncols<<")" << std::endl;
     for (int col = 0; col < csc.ncols; col++) {
         for (long long idx = csc.col_pointers[col]; idx < csc.col_pointers[col+1]; idx++) {
             int row = csc.row_indices[idx];

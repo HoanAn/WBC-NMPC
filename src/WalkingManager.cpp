@@ -61,6 +61,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
     root_joint,
     full_robot_model
   );
+  std::cout << "Root joint name: " << root_joint.id() << std::endl;
   // Define the locked joints in the constant string "joints_to_lock_names" 
   //for the pinocchio robot model to build a reduced model.
 //   const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
@@ -101,6 +102,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   rsole_idx_ = robot_model_.getFrameId("right_foot_link");
   torso_idx_ = robot_model_.getFrameId("torso_link");
   pelvis_idx_ = robot_model_.getFrameId("pelvis");
+  std::cout << "pelvis_idx : " << pelvis_idx_ << std::endl;
   const auto& T_lsole_init = robot_data_.oMf[lsole_idx_];
   const auto& T_rsole_init = robot_data_.oMf[rsole_idx_];
 
@@ -299,18 +301,19 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   whole_body_MPC_ptr_ = std::make_shared<WholeBodyMPC>(
       WBMPC_params,
       robot_model_,
-      q_jnt_des_,
+      q_init,
       0.001 * controller_timestep_msec_,
-      5,
+      10,
       armatures
   );
 
- whole_body_MPC_ptr_->update_first_guess(
-      robot_model_,
-      robot_data_,
-      q_init,
-      5
-  );
+//  whole_body_MPC_ptr_->update_guess(
+//       robot_model_,
+//       robot_data_,
+//       q_init,
+//       Eigen::VectorXd::Zero(robot_model_.nv),
+//       5
+//   );
   
 
   // Init discrete LIP dynamics:
@@ -461,8 +464,8 @@ WalkingManager::update(
         J_torso
     );
 
-    std::cout << "CoM position from robot_data: " << p_CoM.transpose() << std::endl;
-    std::cout << "CoM position from q"  << q.head(3) << std::endl;
+    //std::cout << "CoM position from robot_data: " << p_CoM.transpose() << std::endl;
+    std::cout << "CoM position from q: "  << q.head(3).transpose() << std::endl;
 
     // auto J_torso_orientation = J_torso.bottomRows<3>();
     // Eigen::MatrixXd J_torso_dot = Eigen::MatrixXd::Zero(6, robot_model_.nv);
@@ -507,7 +510,7 @@ WalkingManager::update(
         pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED,
         J_lsole
     );
-
+    //std::cout << "J_lsole walk manager: " << J_lsole << std::endl;
     const auto& v_lsole = J_lsole * qdot;
     // Eigen::MatrixXd J_lsole_dot = Eigen::MatrixXd::Zero(6, robot_model_.nv);
     // pinocchio::getFrameJacobianTimeVariation(
@@ -588,6 +591,7 @@ WalkingManager::update(
     // CoM task:
     auto mpc_t0_ms = std::chrono::system_clock::now();
     // SOLVE THE IS-MPC PROBLEM:
+    //std::cout << "Walking state manager: " << static_cast<int>(walking_data_.getWalkingState()) << std::endl;
     ismpc_ptr_->solve(t_msec_, walking_data_, filtered_state_);
     // std::cout << "IS-MPC input: " << ismpc_ptr_->getInput().transpose() << std::endl;
     auto mpc_tf_ms = std::chrono::system_clock::now();
@@ -668,6 +672,19 @@ WalkingManager::update(
     );
     //std::cout << "HPIPM torque command: " << joint_command << std::endl;
 
+    pinocchio::forwardKinematics(robot_model_, robot_data_, q);
+    //pinocchio::jacobianCenterOfMass(robot_model_, robot_data_, q);
+    pinocchio::framesForwardKinematics(robot_model_, robot_data_, q);
+    pinocchio::computeJointJacobians(robot_model_, robot_data_, q);
+
+//     whole_body_MPC_ptr_->update_guess(
+//       robot_model_,
+//       robot_data_,
+//       q,
+//       qdot,
+//       5
+//   );
+
     labrob::JointCommand joint_command2 = whole_body_MPC_ptr_->compute_inverse_dynamics(
         robot_model_,
         robot_state,
@@ -678,6 +695,7 @@ WalkingManager::update(
         walking_data_
     );
 
+    joint_command = joint_command2;
 
 
 

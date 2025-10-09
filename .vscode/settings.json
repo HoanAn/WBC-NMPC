@@ -82,6 +82,7 @@
         "sparse": "cpp",
         "sparseqr": "cpp",
         "sparsecore": "cpp",
-        "orderingmethods": "cpp"
+        "orderingmethods": "cpp",
+        "specialfunctions": "cpp"
     }
 }

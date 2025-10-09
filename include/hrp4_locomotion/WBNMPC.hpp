@@ -74,7 +74,8 @@ struct WholeBodyMPCParams {
   double weight_regulation;
   double weight_angular_momentum;
   /// Weight needed
-  double weight_com;
+  double weight_com_xy;
+  double weight_com_z;
   double weight_torso;
   double weight_general_qj; //generalized configuration q = [p_b, \theta_b, q_j] \in R^{n_j +6}
   
@@ -130,10 +131,11 @@ class WholeBodyMPC {
 
   );
 
-  void update_first_guess(const pinocchio::Model& robot_model,
+  void update_guess(const pinocchio::Model& robot_model,
       pinocchio::Data& robot_data,
-      const Eigen::VectorXd& q_init, 
-      const int prediction_horizon);
+      const Eigen::VectorXd& q,
+      const Eigen::VectorXd& qdot, 
+      const int prediction_horizon, const bool init);
   
 
 
@@ -149,7 +151,23 @@ class WholeBodyMPC {
 
   void update_CoM_desired( int64_t t_msec, const labrob::WalkingData& walking_data, vars_WBNMPC &desired_vars);
 
-  
+  vars_WBNMPC backtracking_line_search(
+    const Eigen::VectorXd& delta_w,
+    vars_WBNMPC& guess_vars,
+    vars_WBNMPC& desired_vars,
+    const pinocchio::Model& robot_model,
+    double dt,
+    const std::vector<double>& Gamma_vec,
+    const WholeBodyMPCParams& params,
+    // line search parameters
+    double alpha_min   = 1e-4,
+    double theta_max   = 1e-2,
+    double theta_min   = 1e-6,
+    double eta         = 1e-4,
+    double gamma_phi   = 1e-6,
+    double gamma_theta = 1e-6,
+    double gamma_alpha = 0.5
+  ); 
   pinocchio::Model robot_model_;
   pinocchio::Data robot_data_;
 
@@ -190,12 +208,14 @@ class WholeBodyMPC {
 
   std::vector<double> Gamma_vec_;
 
-  casadi_real* cs_constraint_out_[1];
-  casadi_real* cs_Jacob_constraint_out_[1];
+  // casadi_real* cs_constraint_out_[1];
+  // casadi_real* cs_Jacob_constraint_out_[1];
 
   qpsolvers::CSCMatrix_params csc_constraint_;
   qpsolvers::CSCMatrix_params csc_Jacob_constraint_;
   qpsolvers::CSCMatrix_params P_;// Cost Hessian
+  qpsolvers::CSCMatrix_params csc_g_;// Cost Hessian Jacobian
+  qpsolvers::CSCMatrix_params csc_cost_;// Cost Hessian Jacobian
 
   Eigen::VectorXd g_;// Cost Jacobian
 

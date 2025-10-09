@@ -129,10 +129,15 @@ int work_return;
 
 void eval_codegen(  int (*fname_work)(casadi_int* sz_arg, casadi_int* sz_res, casadi_int* sz_iw, casadi_int* sz_w),
                     int (*fname)(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem),
-                    const casadi_real** data_in, casadi_real** res_out){
+                    const casadi_int* (*fname_sparsity_out)(casadi_int i),
+                    const casadi_real** data_in, labrob::qpsolvers::CSCMatrix_params &csc_out){
 
   casadi_int sz_arg_, sz_res_, sz_iw_, sz_w_;
-  std::cout << "Calculating work size..." << std::endl;
+  //CSCMatrix_params csc_out;
+  
+
+
+  //std::cout << "Calculating work size..." << std::endl;
   int work = fname_work(&sz_arg_, &sz_res_, &sz_iw_, &sz_w_);
   if (work > 0) {
     std::cerr << "Error in work size calculation: " << work << std::endl;
@@ -140,26 +145,96 @@ void eval_codegen(  int (*fname_work)(casadi_int* sz_arg, casadi_int* sz_res, ca
   }
 
   //const casadi_real *arg[*sz_arg_];
-  casadi_real *res[sz_res_];
+  // Extract the sparsity pattern https://github.com/casadi/casadi/issues/3701
+  
+  const casadi_int* sparsity = fname_sparsity_out(0);
+  const casadi_int* colind = sparsity + 2;
+  
+  csc_out.nrows = sparsity[0];
+  csc_out.ncols = sparsity[1];
+  csc_out.nzeros = sparsity[csc_out.ncols + 2];
+
+  csc_out.row_indices.resize(csc_out.nzeros);
+  csc_out.col_pointers.resize(csc_out.ncols + 1);
+
+  for (casadi_int i = 0; i <= csc_out.ncols; ++i){
+
+    //std::cout << "colind["<< i << "] = " << colind[i] << std::endl;
+    csc_out.col_pointers[i] = colind[i];
+  }
+  const casadi_int* rowind = colind + csc_out.ncols + 1;
+  //std::cout << "rowind["<< 0 << "] = " << rowind[0] << std::endl;
+  for (casadi_int i = 0; i < csc_out.nzeros; ++i){
+    //std::cout << "rowind["<< i << "] = " << rowind[i] << std::endl;
+    csc_out.row_indices[i] = rowind[i];  
+  }
+
+  csc_out.data.resize(csc_out.nzeros);
+  casadi_real *res[sz_res_] = {csc_out.data.data()};
   casadi_int iw[sz_iw_];
   casadi_real w[sz_w_];
 
   const casadi_real* arg[sz_arg_];
+
+  //casadi_real* res[1];
+  //res[0] = csc_out.data.data();
   //arg = data_in;
-  std::cout << "Data in size: " << sz_arg_ << std::endl;
+  //std::cout << "Data in size: " << sz_arg_ << std::endl;
   int eval = fname(data_in, res, iw, w,0);
-  std::cout << "Evaluation done." << std::endl;
+  
 
   if (eval > 0) {
     std::cerr << "Error in evaluation: " << eval << std::endl;
     return;
-  }  
-  for (casadi_int i = 0; i < sz_res_; ++i) {
-    res_out[i] = res[i];
-  }
- 
-                    
+  } 
+
+  // for(int i = 0; i < csc_out.nzeros; ++i){
+  //   std::cout << "data " << i << ": " << csc_out.data[i] << std::endl;
+  // };
+  //std::cout<< "End of eval" << std::endl;
 }
+
+SX quatMul(const SX& q1, const SX& q2) {
+    SX x1 = q1(0), y1 = q1(1), z1 = q1(2), w1 = q1(3);
+    SX x2 = q2(0), y2 = q2(1), z2 = q2(2), w2 = q2(3);
+
+    return SX::vertcat({
+        w1*x2 + x1*w2 + y1*z2 - z1*y2,   // x
+        w1*y2 - x1*z2 + y1*w2 + z1*x2,   // y
+        w1*z2 + x1*y2 - y1*x2 + z1*w2,   // z
+        w1*w2 - x1*x2 - y1*y2 - z1*z2    // w
+        });
+}
+
+    // Quaternion conjugate (inverse if unit quaternion)
+SX quatConj(const SX& q) {
+    return SX::vertcat({-q(0), -q(1), -q(2), q(3)});
+}
+
+  // Orientation error cost between q_ref and q_cur
+SX quatErrorCost(const SX& q_ref, const SX& q_cur, SX weight) {
+      SX q_err = quatMul(q_ref, quatConj(q_cur));  // relative quaternion
+      SX v = q_err(Slice(0,3));                    // vector part [x,y,z]
+      SX rotvec = 2 * v;                           // small-angle approx
+      return weight * SX::dot(rotvec, rotvec);
+}
+
+struct cs_Weight{
+  SX weight_com_xy = SX::sym("w_cxy",1);
+  SX weight_com_z = SX::sym("w_cz",1);
+  SX weight_torso = SX::sym("w_t",1);
+  SX weight_general_qj = SX::sym("w_qj",1); //generalized configuration q = [p_b, \theta_b, q_j] \in R^{n_j +6}
+  
+  SX weight_general_vb = SX::sym("w_vb",1);
+  SX weight_general_omega_b = SX::sym("w_om",1);
+  SX weight_general_v = SX::sym("w_vj",1); //generalized velocity v = [vb ; \omega_b, \dot q_j]
+  
+  SX weight_contact_force_xy = SX::sym("w_fxy",1);
+  SX weight_contact_force_z = SX::sym("w_fz",1);
+
+  SX foot_length = 0.17;
+  SX foot_width = 0.05;
+};
 
 int main() {
   // Load MJCF (for Mujoco):
@@ -317,7 +392,7 @@ int main() {
 
   std::cout << "Setting up casadi components" << std::endl;
 
-  int N = 5; // predicted horizion
+  int N = 10; // predicted horizion
   double d_dt = 0.001; // dynamic sample time
   double d_mu = 0.5; // friction coefficient
 
@@ -400,9 +475,9 @@ int main() {
   CasadiModel model_casadi = robot_model_test.cast<SX>();
   CasadiData data_casadi(model_casadi);
 
-  SX cost = SX::sym("cost", 1); // cost function
-  cost = 0.0; // Initialize cost to zero
-  auto WBNMPC_params = labrob::WholeBodyMPCParams::getDefaultParams();
+  SX cost = 0.0; // cost function
+  //cost = 0.0; // Initialize cost to zero
+  cs_Weight WBNMPC_params;
 
   ///INITIAL CONSTRAINTS--------------------------------------------------
   SX f0 (num_q_single_step + num_v_single_step,1); // Initial constraints
@@ -498,6 +573,9 @@ int main() {
     SX delta_v_k = v_k - v_r_k;
     SX delta_q_k = q_k - q_r_k;
 
+
+
+
     SX delta_F_lsole_k = F_lsole_k - F_lsole_r_k;
     SX delta_F_rsole_k = F_rsole_k - F_rsole_r_k;
 
@@ -508,15 +586,16 @@ int main() {
                 WBNMPC_params.weight_general_omega_b  * SX::sumsqr(delta_v_k(Slice(3, 6))) +
                 WBNMPC_params.weight_general_v        * SX::sumsqr(delta_v_k(Slice(6, num_v_single_step)));
     
-    SX cost_q = WBNMPC_params.weight_com * SX::sumsqr(delta_q_k(Slice(0, 3))) +
-                WBNMPC_params.weight_torso * SX::sumsqr(delta_q_k(Slice(3, 6))) +
-                WBNMPC_params.weight_general_qj * SX::sumsqr(delta_q_k(Slice(6, num_q_single_step)));
-
+    SX cost_q = WBNMPC_params.weight_com_xy * SX::sumsqr(delta_q_k(Slice(0, 2))) +
+                WBNMPC_params.weight_com_z * SX::sumsqr(delta_q_k(2)) +
+                
+                WBNMPC_params.weight_general_qj * SX::sumsqr(delta_q_k(Slice(7, num_q_single_step)));
+    //WBNMPC_params.weight_torso * SX::sumsqr(delta_q_k(Slice(3, 7))) +
     // Sum over contacts C (here, left and right feet)
     casadi::SX cost_F = WBNMPC_params.weight_contact_force_xy * (SX::sumsqr(delta_F_lsole_k(Slice(0,2))) + SX::sumsqr(delta_F_lsole_k(Slice(3,5))) )+
-                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_lsole_k(2)) + SX::sumsqr(delta_F_lsole_k(3))) +
+                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_lsole_k(2)) + SX::sumsqr(delta_F_lsole_k(5))) +
                         WBNMPC_params.weight_contact_force_xy * (SX::sumsqr(delta_F_rsole_k(Slice(0,2))) + SX::sumsqr(delta_F_rsole_k(Slice(3,5))) )+
-                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_rsole_k(2)) + SX::sumsqr(delta_F_rsole_k(3)));
+                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_rsole_k(2)) + SX::sumsqr(delta_F_rsole_k(5)));
 
     // Total running cost for this time step k
     casadi::SX running_cost_k = cost_v + cost_q + cost_F;
@@ -530,6 +609,7 @@ int main() {
     SX p_k = q_k(Slice(0, 3)); // Position of the base in the world frame
     SX p_k1 = q_k1(Slice(0, 3)); // Position of the base in the world frame for the next step
     SX u_quarternion_k = q_k(Slice(3, 7)); // Quaternion orientation of the base
+    SX ur_quarternion_k = q_r_k(Slice(3, 7)); // Ref Quaternion orientation of the base
     SX u_quarternion_k1 = q_k1(Slice(3, 7)); // Quaternion orientation of the base for the next step
     SX qj_k = q_k(Slice(7, num_q_single_step)); // Joint configuration for the current step
     SX qj_k1 = q_k1(Slice(7, num_q_single_step)); // Joint configuration for the next step
@@ -553,6 +633,19 @@ int main() {
     SX z = u_quarternion_k(2);
     SX w = u_quarternion_k(3);
 
+    // SX x_r = ur_quarternion_k(0);
+    // SX y_r = ur_quarternion_k(1);
+    // SX z_r = ur_quarternion_k(2);
+    // SX w_r = ur_quarternion_k(3);
+
+
+    
+
+    SX cost_torso = quatErrorCost(ur_quarternion_k, u_quarternion_k, WBNMPC_params.weight_torso);
+
+    cost += cost_torso; // Adding the torso orientation cost
+
+
     // Construct the B(q_k) matrix
     SX B_qk = SX::zeros(4, 3);
     B_qk(0, 0) = w;  B_qk(0, 1) = z;  B_qk(0, 2) = -y;
@@ -560,7 +653,7 @@ int main() {
     B_qk(2, 0) = y;  B_qk(2, 1) = -x; B_qk(2, 2) = w;
     B_qk(3, 0) = -x; B_qk(3, 1) = -y; B_qk(3, 2) = -z;
 
-    f_kin_i(Slice(3, 7)) = u_quarternion_k1 - u_quarternion_k - 0.5* mtimes (B_qk,vt_k + vt_k1)*dt; // Quaternion constraint
+    f_kin_i(Slice(3, 7)) = u_quarternion_k1 - u_quarternion_k - 0.5* mtimes (B_qk,omega_k + omega_k1)*dt; // Quaternion constraint
     std::cout << "f_kin_i \n: " << f_kin_i << std::endl;
   // f_constraint kinematic
     f_kin(Slice(k*num_q_single_step, (k + 1)*num_q_single_step)) = f_kin_i; // Store the constraint for this step
@@ -691,8 +784,8 @@ int main() {
 
     
     std::cout << "Building dynamic constraint" << std::endl; 
-    f_dyn_i = SX::vertcat({SX::zeros(6,1), tau_k}) + 
-                              mtimes(J_lsole_cs.T(),wrench_lsole)  + mtimes(J_rsole_cs.T(), wrench_rsole) - tau_RNEA;// ;
+    f_dyn_i = SX::vertcat({SX::zeros(6,1), tau_k}) - tau_RNEA 
+                              + mtimes(J_lsole_cs.T(),wrench_lsole)  + mtimes(J_rsole_cs.T(), wrench_rsole) ;// ;
 
     // f_dyn_i = SX::vertcat({wrench_lsole , wrench_rsole, SX::zeros(num_v_single_step-12,1)});
                                                       
@@ -768,12 +861,30 @@ int main() {
 
 
 // For the cost function
-  SX Jacob_cost = jacobian(cost, decision_vars);
-  SX Hessian_cost = hessian(cost, decision_vars);
+  SX Jacob_cost_pre = jacobian(cost, decision_vars);
+  SX Hessian_cost_pre = hessian(cost, decision_vars);
 
-  Function eval_Jacob_cost = Function("eval_Jacobian_cost", {ca_q, ca_q_r, ca_v, ca_v_r, F_lsole, F_lsole_r, F_rsole, F_rsole_r}, {Jacob_cost});
-  Function eval_Hessian_cost = Function("eval_Hessian_cost", {ca_q, ca_q_r, ca_v, ca_v_r, F_lsole, F_lsole_r, F_rsole, F_rsole_r}, {Hessian_cost});
+  SX Jacob_cost =  cse(Jacob_cost_pre);
+  SX Hessian_cost = cse(Hessian_cost_pre);
 
+
+  Function eval_cost = Function("eval_cost", {ca_q, ca_q_r, ca_v, ca_v_r, F_lsole, F_lsole_r, F_rsole, F_rsole_r,
+                                              WBNMPC_params.weight_com_xy, WBNMPC_params.weight_com_z, WBNMPC_params.weight_torso, WBNMPC_params.weight_general_qj,
+                                              WBNMPC_params.weight_general_vb, WBNMPC_params.weight_general_omega_b, WBNMPC_params.weight_general_v,
+                                              WBNMPC_params.weight_contact_force_xy, WBNMPC_params.weight_contact_force_z
+                                              }, {cost});
+  Function eval_Jacob_cost = Function("eval_Jacobian_cost", {ca_q, ca_q_r, ca_v, ca_v_r, F_lsole, F_lsole_r, F_rsole, F_rsole_r,
+                                                            WBNMPC_params.weight_com_xy, WBNMPC_params.weight_com_z, WBNMPC_params.weight_torso, WBNMPC_params.weight_general_qj,
+                                                            WBNMPC_params.weight_general_vb, WBNMPC_params.weight_general_omega_b, WBNMPC_params.weight_general_v,
+                                                            WBNMPC_params.weight_contact_force_xy, WBNMPC_params.weight_contact_force_z
+                                                            }, {Jacob_cost});
+  Function eval_Hessian_cost = Function("eval_Hessian_cost", {ca_q_r,
+                                                              WBNMPC_params.weight_com_xy, WBNMPC_params.weight_com_z, WBNMPC_params.weight_torso, WBNMPC_params.weight_general_qj,
+                                                              WBNMPC_params.weight_general_vb, WBNMPC_params.weight_general_omega_b, WBNMPC_params.weight_general_v,
+                                                              WBNMPC_params.weight_contact_force_xy, WBNMPC_params.weight_contact_force_z
+                                                              }, {Hessian_cost});
+
+ 
 // For the initial constraints
   // Function eval_f0 = Function("eval_f0", {ca_q, ca_v}, {f0}); 
   // std::cout << "Done building f0 eval function" << std::endl;
@@ -837,9 +948,10 @@ int main() {
 
   CodeGenerator Codegen("eval_codegen_func.cpp", codegen_options);
   std::cout << "Generating code for the functions" << std::endl;
-  //Codegen.add(eval_Jacob_cost);
-  // Codegen.add(eval_Hessian_cost);
-
+  Codegen.add(eval_cost);
+  Codegen.add(eval_Jacob_cost);
+  Codegen.add(eval_Hessian_cost);
+  
   Codegen.add(eval_f_total_constraint);
   Codegen.add(eval_Jacob_f_total_constraint);
   // Codegen.add_include("codegen_func.hpp",true, "~/Sapienza/Excelent/mpc/include");
@@ -967,10 +1079,10 @@ labrob::pressAnyKey();
       data_meas[7] = Gamma_vec.data();
       //data_meas[8] = ref_feet_height_vec.data();
       
-      casadi_real* res_out[1];
+      labrob::qpsolvers::CSCMatrix_params res_out;
       std::cout << "Codegen fconstraint" << std::endl;
 
-      eval_codegen(f_total_constraint_work, f_total_constraint, data_meas,res_out );
+      eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,res_out );
       std::cout << "f_fconstraint_eval: " << std::endl;
 
       // for (int i = 0; i < num_constraint; ++i) {

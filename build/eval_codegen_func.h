@@ -17,6 +17,69 @@ extern "C" {
 #define casadi_int long long int
 #endif
 
+int eval_cost(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
+int eval_cost_alloc_mem(void);
+int eval_cost_init_mem(int mem);
+void eval_cost_free_mem(int mem);
+int eval_cost_checkout(void);
+void eval_cost_release(int mem);
+void eval_cost_incref(void);
+void eval_cost_decref(void);
+casadi_int eval_cost_n_in(void);
+casadi_int eval_cost_n_out(void);
+casadi_real eval_cost_default_in(casadi_int i);
+const char* eval_cost_name_in(casadi_int i);
+const char* eval_cost_name_out(casadi_int i);
+const casadi_int* eval_cost_sparsity_in(casadi_int i);
+const casadi_int* eval_cost_sparsity_out(casadi_int i);
+int eval_cost_work(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+int eval_cost_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+#define eval_cost_SZ_ARG 17
+#define eval_cost_SZ_RES 1
+#define eval_cost_SZ_IW 0
+#define eval_cost_SZ_W 22
+int eval_Jacobian_cost(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
+int eval_Jacobian_cost_alloc_mem(void);
+int eval_Jacobian_cost_init_mem(int mem);
+void eval_Jacobian_cost_free_mem(int mem);
+int eval_Jacobian_cost_checkout(void);
+void eval_Jacobian_cost_release(int mem);
+void eval_Jacobian_cost_incref(void);
+void eval_Jacobian_cost_decref(void);
+casadi_int eval_Jacobian_cost_n_in(void);
+casadi_int eval_Jacobian_cost_n_out(void);
+casadi_real eval_Jacobian_cost_default_in(casadi_int i);
+const char* eval_Jacobian_cost_name_in(casadi_int i);
+const char* eval_Jacobian_cost_name_out(casadi_int i);
+const casadi_int* eval_Jacobian_cost_sparsity_in(casadi_int i);
+const casadi_int* eval_Jacobian_cost_sparsity_out(casadi_int i);
+int eval_Jacobian_cost_work(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+int eval_Jacobian_cost_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+#define eval_Jacobian_cost_SZ_ARG 17
+#define eval_Jacobian_cost_SZ_RES 1
+#define eval_Jacobian_cost_SZ_IW 0
+#define eval_Jacobian_cost_SZ_W 17
+int eval_Hessian_cost(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
+int eval_Hessian_cost_alloc_mem(void);
+int eval_Hessian_cost_init_mem(int mem);
+void eval_Hessian_cost_free_mem(int mem);
+int eval_Hessian_cost_checkout(void);
+void eval_Hessian_cost_release(int mem);
+void eval_Hessian_cost_incref(void);
+void eval_Hessian_cost_decref(void);
+casadi_int eval_Hessian_cost_n_in(void);
+casadi_int eval_Hessian_cost_n_out(void);
+casadi_real eval_Hessian_cost_default_in(casadi_int i);
+const char* eval_Hessian_cost_name_in(casadi_int i);
+const char* eval_Hessian_cost_name_out(casadi_int i);
+const casadi_int* eval_Hessian_cost_sparsity_in(casadi_int i);
+const casadi_int* eval_Hessian_cost_sparsity_out(casadi_int i);
+int eval_Hessian_cost_work(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+int eval_Hessian_cost_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w);
+#define eval_Hessian_cost_SZ_ARG 10
+#define eval_Hessian_cost_SZ_RES 1
+#define eval_Hessian_cost_SZ_IW 0
+#define eval_Hessian_cost_SZ_W 22
 int f_total_constraint(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
 int f_total_constraint_alloc_mem(void);
 int f_total_constraint_init_mem(int mem);
@@ -37,7 +100,7 @@ int f_total_constraint_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi
 #define f_total_constraint_SZ_ARG 8
 #define f_total_constraint_SZ_RES 1
 #define f_total_constraint_SZ_IW 0
-#define f_total_constraint_SZ_W 1284
+#define f_total_constraint_SZ_W 1646
 int Jacob_f_total_constraint(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
 int Jacob_f_total_constraint_alloc_mem(void);
 int Jacob_f_total_constraint_init_mem(int mem);
@@ -58,7 +121,7 @@ int Jacob_f_total_constraint_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, 
 #define Jacob_f_total_constraint_SZ_ARG 8
 #define Jacob_f_total_constraint_SZ_RES 1
 #define Jacob_f_total_constraint_SZ_IW 0
-#define Jacob_f_total_constraint_SZ_W 6103
+#define Jacob_f_total_constraint_SZ_W 10936
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
