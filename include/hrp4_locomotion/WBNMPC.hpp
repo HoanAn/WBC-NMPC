@@ -159,6 +159,7 @@ class WholeBodyMPC {
     double dt,
     const std::vector<double>& Gamma_vec,
     const WholeBodyMPCParams& params,
+    int64_t t_msec,
     // line search parameters
     double alpha_min   = 1e-4,
     double theta_max   = 1e-2,
@@ -167,6 +168,7 @@ class WholeBodyMPC {
     double gamma_phi   = 1e-6,
     double gamma_theta = 1e-6,
     double gamma_alpha = 0.5
+    
   ); 
   pinocchio::Model robot_model_;
   pinocchio::Data robot_data_;

@@ -197,12 +197,12 @@ void eval_codegen(  int (*fname_work)(casadi_int* sz_arg, casadi_int* sz_res, ca
 SX quatMul(const SX& q1, const SX& q2) {
     SX x1 = q1(0), y1 = q1(1), z1 = q1(2), w1 = q1(3);
     SX x2 = q2(0), y2 = q2(1), z2 = q2(2), w2 = q2(3);
-
+  
     return SX::vertcat({
         w1*x2 + x1*w2 + y1*z2 - z1*y2,   // x
         w1*y2 - x1*z2 + y1*w2 + z1*x2,   // y
         w1*z2 + x1*y2 - y1*x2 + z1*w2,   // z
-        w1*w2 - x1*x2 - y1*y2 - z1*z2    // w
+        w1*w2 - x1*x2 - y1*y2 - z1*z2    // wBcz iBcaB
         });
 }
 
@@ -388,7 +388,7 @@ int main() {
   std::cout << "Joint velocity measured from mujoco: " << std::endl;
   std::cout << v_meas.transpose() << std::endl;
 
-// Preparing casadi components
+// --------------------Preparing casadi components---------------------
 
   std::cout << "Setting up casadi components" << std::endl;
 
@@ -402,7 +402,7 @@ int main() {
 
   int num_q = robot_model_test.nq*(N+1); // including q0
   int num_v = robot_model_test.nv*(N+1); // including v0
-  int num_contact = 2; // number of contacts per foot (Heel and Toe)
+  int num_contact = 4; // number of contacts per foot (Heel and Toe)
   int num_force = num_contact*3* N; // consider 1 foot, 3 forces per contact (Fx, Fy, Fz), N time steps
   int num_torques_single_step = robot_model_test.nq-7; // excluding q0, q1, q2, q3, q4, q5, q6 (base link)
   int num_torques = num_torques_single_step*(N); // joint torques
@@ -451,7 +451,7 @@ int main() {
   SX tau = SX::sym("tau", num_torques); // joint torques
 
   //----------------------THINK ABOUT IT-------------------------------------------------------------------------
-  SX decision_vars = vertcat(SXVector{ca_q, ca_v, F_lsole, F_rsole, tau});// optimazation decision variables
+  SX decision_vars = vertcat(SXVector{ca_pos_q, ca_pos_v, F_lsole, F_rsole, tau});// optimazation decision variables
   //-------------------------------------------------------------------------------------------------------------
   //int num_gamma = num_contact * 2 *
   //Gamma are variables that captures the contact status
@@ -488,7 +488,8 @@ int main() {
   SX f_kin( (N-0)*num_q_single_step, 1); // N Kinematic constraints q(k+1) = q(k) + 0.5( qdot(k+1)+qdot(k) )*dt ,\forall k= 0 to N-1
   SX f_kin_i(num_q_single_step, 1);
 
-  /// Dynamic constraints--------------------------------------------------
+  /// Dynamic constraints-------------------------------
+
 
   Ca_Matrix6x J_lsole_ca(6, model_casadi.nv);
   //J_lsole_ca.setOnes();
@@ -508,6 +509,7 @@ int main() {
   SX tau_RNEA( num_v_single_step, 1); // RNEA torques for the current step
   //SX tau_i(num_torques_single_step, 1); // joint torques for the current step
 
+  
   /// Contact and swing constraint------------------------------------------------------------
   SX f_Fswing (num_force_single_foot_single_step*2*N,1 );// 2 feet
   //SX f_Fswing_i( num_force_single_foot_single_step*2,1 );
@@ -531,17 +533,17 @@ int main() {
   });
 
   // tangential contact vel
-  SX f_tang_contact_vel ( num_contact*2*2*N,1 );// x, y directions
+  SX f_tang_contact_vel ( 6*2*N,1 );// x, y directions
 
   //
-  int num_constraint = N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*num_contact + 4*num_contact);
+  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*num_contact + 6*num_contact);
   //um_constraint = N* (num_q_single_step  + num_force_single_foot_single_step*2+ 2*num_contact + 2*num_contact+4*num_contact);
   
   std::cout << "Total number of constraints: " << num_constraint << std::endl;
 
   SX cs_f_total_constraint_pre (num_constraint);
 
-
+  labrob::pressAnyKey();
 
 
 //-----------------------------------------------------------------------------------------
@@ -609,8 +611,9 @@ int main() {
     SX p_k = q_k(Slice(0, 3)); // Position of the base in the world frame
     SX p_k1 = q_k1(Slice(0, 3)); // Position of the base in the world frame for the next step
     SX u_quarternion_k = q_k(Slice(3, 7)); // Quaternion orientation of the base
-    SX ur_quarternion_k = q_r_k(Slice(3, 7)); // Ref Quaternion orientation of the base
     SX u_quarternion_k1 = q_k1(Slice(3, 7)); // Quaternion orientation of the base for the next step
+    SX ur_quarternion_k = q_r_k(Slice(3, 7)); // Ref Quaternion orientation of the base
+    
     SX qj_k = q_k(Slice(7, num_q_single_step)); // Joint configuration for the current step
     SX qj_k1 = q_k1(Slice(7, num_q_single_step)); // Joint configuration for the next step
     // Damn, why are they so muchhhh
@@ -633,6 +636,12 @@ int main() {
     SX z = u_quarternion_k(2);
     SX w = u_quarternion_k(3);
 
+    SX x1 = u_quarternion_k1(0);
+    SX y1 = u_quarternion_k1(1);
+    SX z1 = u_quarternion_k1(2);
+    SX w1 = u_quarternion_k1(3);
+
+
     // SX x_r = ur_quarternion_k(0);
     // SX y_r = ur_quarternion_k(1);
     // SX z_r = ur_quarternion_k(2);
@@ -647,13 +656,25 @@ int main() {
 
 
     // Construct the B(q_k) matrix
+    // Quarternion derivative is here: https://arxiv.org/pdf/0811.2889
     SX B_qk = SX::zeros(4, 3);
     B_qk(0, 0) = w;  B_qk(0, 1) = z;  B_qk(0, 2) = -y;
     B_qk(1, 0) = -z; B_qk(1, 1) = w;  B_qk(1, 2) = x;
     B_qk(2, 0) = y;  B_qk(2, 1) = -x; B_qk(2, 2) = w;
     B_qk(3, 0) = -x; B_qk(3, 1) = -y; B_qk(3, 2) = -z;
 
-    f_kin_i(Slice(3, 7)) = u_quarternion_k1 - u_quarternion_k - 0.5* mtimes (B_qk,omega_k + omega_k1)*dt; // Quaternion constraint
+    SX B_qk1 = SX::zeros(4, 3);
+    B_qk1(0, 0) = w1;  B_qk1(0, 1) = z1;  B_qk1(0, 2) = -y1;
+    B_qk1(1, 0) = -z1; B_qk1(1, 1) = w1;  B_qk1(1, 2) = x1;
+    B_qk1(2, 0) = y1;  B_qk1(2, 1) = -x1; B_qk1(2, 2) = w1;
+    B_qk1(3, 0) = -x1; B_qk1(3, 1) = -y1; B_qk1(3, 2) = -z1;
+
+    // B_qk(0, 0) = -x; B_qk(0, 1) = -y; B_qk(0, 2) = -z;
+    // B_qk(1, 0) =  w; B_qk(1, 1) = -z; B_qk(1, 2) =  y;
+    // B_qk(2, 0) =  z; B_qk(2, 1) =  w; B_qk(2, 2) = -x;
+    // B_qk(3, 0) = -y; B_qk(3, 1) =  x; B_qk(3, 2) =  w;
+
+    f_kin_i(Slice(3, 7)) = u_quarternion_k1 - u_quarternion_k - 0.5* 0.5 * (mtimes (B_qk,omega_k) + mtimes (B_qk1,omega_k1))*dt; // Quaternion constraint
     std::cout << "f_kin_i \n: " << f_kin_i << std::endl;
   // f_constraint kinematic
     f_kin(Slice(k*num_q_single_step, (k + 1)*num_q_single_step)) = f_kin_i; // Store the constraint for this step
@@ -831,15 +852,19 @@ int main() {
                       toe_r_height  });
 
   // f_constraint Tangential contact velocity is zero
-    f_tang_contact_vel (Slice (k*num_contact*2*2, (k+1)*num_contact*2*2))
+    f_tang_contact_vel (Slice (k*6*2, (k+1)*6*2))
     = SX::vertcat ( { Gam_h_l_k * cs_v_lsole(0),
                       Gam_h_l_k * cs_v_lsole(1),
+                      Gam_h_l_k * cs_v_lsole(2),
                       Gam_t_l_k * cs_v_lsole(3),
                       Gam_t_l_k * cs_v_lsole(4),
+                      Gam_t_l_k * cs_v_lsole(5),
                       Gam_h_r_k * cs_v_rsole(0),
                       Gam_h_r_k * cs_v_rsole(1),
+                      Gam_h_r_k * cs_v_rsole(2),
                       Gam_t_r_k * cs_v_rsole(3),
-                      Gam_t_r_k * cs_v_rsole(4) } );
+                      Gam_t_r_k * cs_v_rsole(4),
+                      Gam_t_r_k * cs_v_rsole(5)} );
 
     //TODO: separate heel and toe velocity, the correct sequence is toe_l(0-1), heel_l(0-1), toe_r(0-1), heel_r (0-1)
     // Total 6 f_constraint, formulas (4,5,7,8,9,10) in the ref paper.

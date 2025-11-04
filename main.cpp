@@ -31,7 +31,7 @@ robot_state_from_mujoco(mjModel* m, mjData* d) {
   robot_state.orientation = Eigen::Quaterniond(
       d->qpos[3], d->qpos[4], d->qpos[5], d->qpos[6]
   );
-
+  std::cout << "Orientation quaternion from mujoco: " << robot_state.orientation << std::endl;
   robot_state.linear_velocity = robot_state.orientation.toRotationMatrix().transpose() *
       Eigen::Vector3d(
           d->qvel[0], d->qvel[1], d->qvel[2]

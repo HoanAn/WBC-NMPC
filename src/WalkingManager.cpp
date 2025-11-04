@@ -427,7 +427,9 @@ WalkingManager::update(
 
     int njnt = robot_model_.nv - 6; // size of configuration space without floating base
     // These functions convert the robot state from the mujoco format to the pinocchio format.
+    std::cout << "Mujoco robot state: " << robot_state.orientation << std::endl;
     auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
+    std::cout << "q measurement--------: " << q.transpose() << std::endl;
     auto qdot = robot_state_to_pinocchio_joint_velocity(robot_model_, robot_state);
 
     // // Perform forward kinematics on the whole tree and update robot data:

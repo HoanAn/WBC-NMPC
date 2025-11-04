@@ -31,15 +31,15 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
 
   /// Weight needed
   params.weight_com_xy = 1; // First 2 components of vector q
-  params.weight_com_z = 100; // 
-  params.weight_torso = 0.1; // The next fourth quaternion component of vector q
-  params.weight_general_qj = 1e-3; // The rest of joint position
+  params.weight_com_z = 1; // 
+  params.weight_torso = 10; // The next fourth quaternion component of vector q
+  params.weight_general_qj = 1; // The rest of joint position
 
   params.weight_general_vb = 1; // The first three components of vector v (linear velocity of the base)
   params.weight_general_omega_b = 10; // The next three components of vector v (angular velocity of the base)
-  params.weight_general_v = 1e-3; // The rest of joint velocity
+  params.weight_general_v = 1; // The rest of joint velocity
 
-  params.weight_contact_force_xy = 4e-3; // Contact forces in x and y direction
+  params.weight_contact_force_xy = 0.1; // Contact forces in x and y direction
   params.weight_contact_force_z = 10; // Contact forces in z direction
 
   params.cmm_selection_matrix_x = 1e-6;
@@ -88,8 +88,8 @@ WholeBodyMPC::WholeBodyMPC(
 
   n_joints_ = robot_model.nv - 6;
 
-  int num_q = robot_model_.nq*(N+1); // including q0
-  int num_v = robot_model_.nv*(N+1); // including v0
+  int num_q = robot_model_.nq*(N+1*0); // including q0
+  int num_v = robot_model_.nv*(N+1*0); // including v0
   int num_contact = 2; // number of contacts per foot (Heel and Toe)
   int num_force = num_contact*3* N; // consider 1 foot, 3 forces per contact (Fx, Fy, Fz), N time steps
   int num_torques_single_step = robot_model_.nq-7; // excluding q0, q1, q2, q3, q4, q5, q6 (base link)
@@ -102,12 +102,12 @@ WholeBodyMPC::WholeBodyMPC(
 
   int num_force_single_foot_single_step = num_contact * 3; // 3 forces (Fx, Fy, Fz) per contact
 
-  int num_constraint = N* ( num_q_single_step + // f_kin
-                            num_v_single_step + // f_dyn
-                            num_force_single_foot_single_step*2 + // f_Fswing
-                            2*num_contact + // f_friction
-                            2*num_contact + // f_feet_height
-                            4*num_contact); // f_tang_contact_vel
+  int num_constraint = 0*num_q_single_step+ 0*num_v_single_step+ N* ( num_q_single_step + // f_kin
+                                                                  num_v_single_step + // f_dyn
+                                                                  num_force_single_foot_single_step*2 + // f_Fswing
+                                                                  2*num_contact + // f_friction
+                                                                  2*num_contact + // f_feet_height
+                                                                  6*num_contact); // f_tang_contact_vel
 
   n_wbnmpc_variables_ = num_q + num_v + num_torques + 2 * num_force; // ca_q, ca_v,  tau, F_lsole, F_rsole
   n_wbnmpc_equalities_ = num_constraint - N * 2 * num_contact; // excluding the friction
@@ -138,8 +138,8 @@ WholeBodyMPC::WholeBodyMPC(
 
   // Intialize the size  for the guess vars
 
-  guess_vars_.q_sol.resize((size_t)num_q);
-  guess_vars_.v_sol.resize((size_t)num_v);
+  guess_vars_.q_sol.resize((size_t)num_q + robot_model.nq);
+  guess_vars_.v_sol.resize((size_t)num_v + robot_model.nv);
   guess_vars_.F_lsole_sol.resize((size_t)num_force);
   guess_vars_.F_rsole_sol.resize((size_t)num_force);
   guess_vars_.tau_sol.resize((size_t)num_torques);
@@ -217,7 +217,7 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
                                       const Eigen::VectorXd& qdot, 
                                       const int prediction_horizon, const bool init)
 {
-  
+  static std::ofstream Guess_print ("Guess.txt");
   double total_mass = 0.0;
     for (const auto &inertial : robot_model.inertias) {
         total_mass += inertial.mass();
@@ -265,10 +265,10 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
 
   Eigen::VectorXd F_lsole_init = Eigen::VectorXd::Zero(6);
   Eigen::VectorXd F_rsole_init = Eigen::VectorXd::Zero(6);
-  F_lsole_init(2) = total_mass*0.9 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
-  F_lsole_init(5) = total_mass*1.1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
-  F_rsole_init(2) = total_mass*0.9 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
-  F_rsole_init(5) = total_mass*1.1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_lsole_init(2) = total_mass*1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_lsole_init(5) = total_mass*1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_rsole_init(2) = total_mass*1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
+  F_rsole_init(5) = total_mass*1 * 9.81 / 4.0; // Quarter of the weight on each contact point/foot
 
   pinocchio::rnea(robot_model, robot_data, q, qdot, qddot);
 
@@ -297,8 +297,8 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
   // Eigen::Vector3d rheel_pos_vec_world = R_world_rfoot * heel_pos_vec;
 
 std::vector<Eigen::Vector3d> pcis(4);
-  pcis[0] <<  params_.foot_length / 2.0, 0.0, 0.0;
-  pcis[1] <<  -params_.foot_length / 2.0, 0.0, 0.0;
+  pcis[0] <<  -params_.foot_length / 2.0, 0.0, 0.0;
+  pcis[1] <<  params_.foot_length / 2.0, 0.0, 0.0;
   pcis[2] << -params_.foot_length / 2.0, 0.0, 0.0;
   pcis[3] << -params_.foot_length / 2.0, 0.0, 0.0;
 
@@ -357,11 +357,11 @@ std::vector<Eigen::Vector3d> pcis(4);
   tau_init = tau_init - J_lsole.transpose() * wrench_l.toVector() - J_rsole.transpose() * wrench_r.toVector();
   // tau_init.segment(0,6) =  - wrench_lsole_init;
   // tau_init.segment(6,6) =  - wrench_rsole_init;
-  std::cout << "External force transform: "<< (- J_lsole.transpose() * wrench_l.toVector() - J_rsole.transpose() * wrench_r.toVector()).transpose() << std::endl;
-  std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
-  std::cout << "Initial tau from RNEA without contact forces test: \n" << tau_init_test.transpose() << std::endl;
-  std::cout << "Initial tau from RNEA with contact forces: \n" << tau_rnea.transpose() << std::endl;
-  std::cout << "Init " << init << std::endl;
+  // std::cout << "External force transform: "<< (- J_lsole.transpose() * wrench_l.toVector() - J_rsole.transpose() * wrench_r.toVector()).transpose() << std::endl;
+  // std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
+  // std::cout << "Initial tau from RNEA without contact forces test: \n" << tau_init_test.transpose() << std::endl;
+  // std::cout << "Initial tau from RNEA with contact forces: \n" << tau_rnea.transpose() << std::endl;
+  // std::cout << "Init " << init << std::endl;
   if (init){
     guess_vars_.q_sol = q.replicate(prediction_horizon+1,1);
     guess_vars_.v_sol = qdot.replicate(prediction_horizon+1,1);
@@ -393,19 +393,21 @@ std::vector<Eigen::Vector3d> pcis(4);
     guess_vars_.v_sol.head(robot_model.nv) = qdot;
     
     // Shifted the previous solution to the left
-    guess_vars_.q_sol.segment(robot_model.nq, (N_-2)*robot_model.nq) = solution_vars_.q_sol.segment(2*robot_model.nq, (N_-2)*robot_model.nq);
-    guess_vars_.q_sol.tail(robot_model.nq) = solution_vars_.q_sol.tail(robot_model.nq);
+    // guess_vars_.q_sol.segment(robot_model.nq, (N_-2)*robot_model.nq) = solution_vars_.q_sol.segment(2*robot_model.nq, (N_-2)*robot_model.nq);
+    // guess_vars_.q_sol.tail(robot_model.nq) = solution_vars_.q_sol.tail(robot_model.nq);
 
-    guess_vars_.v_sol.segment(robot_model.nv, (N_-2)*robot_model.nv) = solution_vars_.v_sol.segment(2*robot_model.nv, (N_-2)*robot_model.nv);
-    guess_vars_.v_sol.tail(robot_model.nv) = solution_vars_.v_sol.tail(robot_model.nv);
+    // guess_vars_.v_sol.segment(robot_model.nv, (N_-2)*robot_model.nv) = solution_vars_.v_sol.segment(2*robot_model.nv, (N_-2)*robot_model.nv);
+    // guess_vars_.v_sol.tail(robot_model.nv) = solution_vars_.v_sol.tail(robot_model.nv);
 
-    guess_vars_.F_lsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_lsole_sol.segment(6,(N_-1)*6);
-    guess_vars_.F_lsole_sol.tail(6) = solution_vars_.F_lsole_sol.tail(6);
-    guess_vars_.F_rsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_rsole_sol.segment(6,(N_-1)*6);
-    guess_vars_.F_rsole_sol.tail(6) = solution_vars_.F_rsole_sol.tail(6);
+    // guess_vars_.F_lsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_lsole_sol.segment(6,(N_-1)*6);
+    // guess_vars_.F_lsole_sol.tail(6) = solution_vars_.F_lsole_sol.tail(6);
+    // guess_vars_.F_rsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_rsole_sol.segment(6,(N_-1)*6);
+    // guess_vars_.F_rsole_sol.tail(6) = solution_vars_.F_rsole_sol.tail(6);
 
-    guess_vars_.tau_sol.segment(0,(N_-1)*(robot_model.nv-6)) = solution_vars_.tau_sol.segment(robot_model.nv-6,(N_-1)*(robot_model.nv-6));
-    guess_vars_.tau_sol.tail(robot_model.nv-6) = solution_vars_.tau_sol.tail(robot_model.nv-6);
+    // guess_vars_.tau_sol.segment(0,(N_-1)*(robot_model.nv-6)) = solution_vars_.tau_sol.segment(robot_model.nv-6,(N_-1)*(robot_model.nv-6));
+    // guess_vars_.tau_sol.tail(robot_model.nv-6) = solution_vars_.tau_sol.tail(robot_model.nv-6);
+
+
 
 
     //Recompute the RNEA for the first tau
@@ -422,7 +424,7 @@ std::vector<Eigen::Vector3d> pcis(4);
     // std::cout << "External force contribute: " << (- J_lsole.transpose()* T_l * guess_vars_.F_lsole_sol.head(6) - J_rsole.transpose()* T_r * guess_vars_.F_rsole_sol.head(6)).transpose() << std::endl;
     // tau_init = tau_init - J_lsole.transpose()* T_l * guess_vars_.F_lsole_sol.head(6) - J_rsole.transpose()* T_r * guess_vars_.F_rsole_sol.head(6);
     // std::cout << "tau init guess in loop: " << tau_init.transpose() << std::endl;
-    // guess_vars_.tau_sol.head(robot_model_.nv -6 ) = tau_init;
+    // guess_vars_.tau_sol.head(robot_model_.nv -6 ) = tau_init.tail(robot_model.nv-6);
 
     // std::cout << " tau from last solution: \n" << guess_vars_.tau_sol.transpose() << std::endl; 
     //guess_vars_.tau_sol.head(robot_model.nv-6) = tau_init.tail(robot_model.nv-6);
@@ -433,6 +435,19 @@ std::vector<Eigen::Vector3d> pcis(4);
     // guess_vars_.F_rsole_sol = F_rsole_init.replicate(prediction_horizon,1);
 
   }
+  Guess_print << "q last solution:\n" << solution_vars_.q_sol.transpose() << std::endl;
+  Guess_print << "v last solution:\n" << solution_vars_.v_sol.transpose() << std::endl;
+  Guess_print << "F_lsole last solution:\n" << solution_vars_.F_lsole_sol.transpose() << std::endl;
+  Guess_print << "F_rsole last solution:\n" << solution_vars_.F_rsole_sol.transpose() << std::endl;
+  Guess_print << "tau last solution:\n" << solution_vars_.tau_sol.transpose() << std::endl;
+
+  Guess_print << "q guess:\n" << guess_vars_.q_sol.transpose() << std::endl;
+  Guess_print << "v guess:\n" << guess_vars_.v_sol.transpose() << std::endl;
+  Guess_print << "F_lsole guess:\n" << guess_vars_.F_lsole_sol.transpose() << std::endl;
+  Guess_print << "F_rsole guess:\n" << guess_vars_.F_rsole_sol.transpose() << std::endl;
+  Guess_print << "tau guess:\n" << guess_vars_.tau_sol.transpose() << std::endl;
+
+  Guess_print << "----------------------------------------" << std::endl;
   // std:: cout << "Updated first guess q_sol: \n" << guess_vars_.q_sol.transpose() << std::endl;
   // std:: cout << "Updated first guess v_sol: \n" << guess_vars_.v_sol.transpose() << std::endl;
   // std:: cout << "Updated first guess F_lsole_sol: \n" << guess_vars_.F_lsole_sol.transpose() << std::endl;
@@ -465,10 +480,10 @@ WholeBodyMPC::compute_inverse_dynamics(
   double dt = 0.01;
 
    auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
-   std::cout << "Current q: " << q.transpose() << std::endl;
+   //std::cout << "Current q: " << q.transpose() << std::endl;
    
    auto qdot = robot_state_to_pinocchio_joint_velocity(robot_model_, robot_state);
-   std::cout << "Current v: " << qdot.transpose() << std::endl;
+   //std::cout << "Current v: " << qdot.transpose() << std::endl;
   // Update for the q0 and v0
   //  guess_vars_.q_sol.head(robot_model.nq) = q;
   //  guess_vars_.v_sol.head(robot_model.nv) = qdot;
@@ -476,13 +491,27 @@ WholeBodyMPC::compute_inverse_dynamics(
   if (t_msec != 0)
     update_guess(robot_model, robot_data, q, qdot, N_, false);
   
-  std::cout << "q0 MPC: " << solution_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
-  std::cout << "q0 MPC guess, i.e curent meas: " << guess_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
-  std::cout << "Predicted q MPC: " << solution_vars_.q_sol.segment(robot_model_.nq,robot_model_.nq).transpose() << std::endl;
-  std::cout << "--------------------------------" << std::endl;
-  std::cout << "v0 MPC: " << solution_vars_.v_sol.head(robot_model_.nv).transpose() << std::endl;
-  std::cout << "v0 MPC guess, i.e curent meas: " << guess_vars_.v_sol.head(robot_model_.nv).transpose() << std::endl;
-  std::cout << "Predicted v MPC: " << solution_vars_.v_sol.segment(robot_model_.nv,robot_model_.nv).transpose() << std::endl;
+  static std::ofstream State_print ("State.txt");
+
+  
+  // std::cout << "q0 MPC: " << solution_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
+  // std::cout << "q0 MPC guess, i.e curent meas: " << guess_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
+  // std::cout << "Predicted q MPC: " << solution_vars_.q_sol.segment(robot_model_.nq,robot_model_.nq).transpose() << std::endl;
+  // std::cout << "--------------------------------" << std::endl;
+  // std::cout << "v0 MPC: " << solution_vars_.v_sol.head(robot_model_.nv).transpose() << std::endl;
+  // std::cout << "v0 MPC guess, i.e curent meas: " << guess_vars_.v_sol.head(robot_model_.nv).transpose() << std::endl;
+  // std::cout << "Predicted v MPC: " << solution_vars_.v_sol.segment(robot_model_.nv,robot_model_.nv).transpose() << std::endl;
+
+  State_print << "State at time " << t_msec << " ms ------------------\n";
+  State_print << "q measurement:\n" << guess_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
+  State_print << "q0 MPC last solution:\n" << solution_vars_.q_sol.head(robot_model_.nq).transpose() << std::endl;
+  State_print << "Predicted q MPC last solution:\n" << solution_vars_.q_sol.segment(robot_model_.nq,robot_model_.nq).transpose() << std::endl;
+  State_print << "v measurement:\n" << guess_vars_.v_sol.head(robot_model_.nq).transpose() << std::endl;
+  State_print << "v0 MPC last solution:\n" << solution_vars_.v_sol.head(robot_model_.nq).transpose() << std::endl;
+  State_print << "Predicted v MPC last solution:\n" << solution_vars_.v_sol.segment(robot_model_.nq,robot_model_.nq).transpose() << std::endl;
+  State_print << "----------------------------------------------------------------------\n";
+
+
 
   // std::cout << "Update q0: " << guess_vars_.q_sol.transpose() << std::endl;
   // std::cout << "Update dq0: " << guess_vars_.v_sol.transpose() << std::endl;
@@ -546,27 +575,24 @@ WholeBodyMPC::compute_inverse_dynamics(
   // }
   std::cout << std::endl;
   //std::cout << "Dense constraint: \n" << dense_constraint.transpose() << std::endl;
-  Eigen::VectorXd l_g = Eigen::VectorXd::Zero(n_wbnmpc_variables_)- dense_constraint;
-  Eigen::VectorXd u_g = Eigen::VectorXd::Zero(n_wbnmpc_variables_);
+  Eigen::VectorXd l_g = Eigen::VectorXd::Zero(n_wbnmpc_equalities_+n_wbnmpc_inequalities_);
+  Eigen::VectorXd u_g = Eigen::VectorXd::Zero(n_wbnmpc_equalities_+n_wbnmpc_inequalities_);
 
   // The upper part of the inequality constraint must be different from the lower part
-  u_g.segment(N_*(robot_model.nq+robot_model.nv+6), n_wbnmpc_inequalities_).setConstant(1e10);
+  u_g.segment(0*robot_model.nq + 0*robot_model.nv + N_*(robot_model.nq+robot_model.nv+ 2*3*2), n_wbnmpc_inequalities_).setConstant(1e3);
+  u_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*2) + n_wbnmpc_inequalities_, 2*n_contacts_*N_).setConstant(0.2);
+  l_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*2) + n_wbnmpc_inequalities_, 2*n_contacts_*N_).setConstant(-0.2);
+  u_g.tail(12*N_).setConstant(0.2);
+  l_g.tail(12*N_).setConstant(-0.2);
+  //u_g.segment(0, robot_model.nq) = q;
+  //u_g.segment(robot_model.nq, robot_model.nv) = qdot;
+  //l_g.segment(0, robot_model.nq) = q;
+  //l_g.segment(robot_model.nq, robot_model.nv) = qdot;
 
   u_g = u_g -  dense_constraint;
-
-  // const casadi_real* data_Hes_cost[10];
-  // data_Hes_cost[0] = desired_vars_.q_sol.data();
-  // data_Hes_cost[1] = &params_.weight_com_xy;
-  // data_Hes_cost[2] = &params_.weight_com_z;
-  // data_Hes_cost[3] = &params_.weight_torso;
-  // data_Hes_cost[4] = &params_.weight_general_qj;
-  // data_Hes_cost[5] = &params_.weight_general_vb;
-  // data_Hes_cost[6] = &params_.weight_general_omega_b;
-  // data_Hes_cost[7] = &params_.weight_general_v;
-  // data_Hes_cost[8] = &params_.weight_contact_force_xy;
-  // data_Hes_cost[9] = &params_.weight_contact_force_z;
-  // eval_codegen(eval_Hessian_cost_work, eval_Hessian_cost,eval_Hessian_cost_sparsity_out,data_Hes_cost, P_ );
-
+  std::cout << "Upper bound g: \n" << u_g.transpose() << std::endl;
+  l_g = l_g -  dense_constraint;
+  std::cout << "Lower bound g: \n" << l_g.transpose() << std::endl;
   // Solve the QP
   qpsolvers::CSCMatrix_params P_upper;
     P_upper.nrows = P_.nrows;
@@ -591,9 +617,22 @@ WholeBodyMPC::compute_inverse_dynamics(
   // Get the solution
   //double* sol = wbnmpc_solver_ptr_->get_solution();
   Eigen::Map<Eigen::VectorXd> solution(wbnmpc_solver_ptr_->get_solution().data(), n_wbnmpc_variables_);
+  //std::cout << "Guess vars input to linesearch: \n" << guess_vars_.q_sol.transpose() << std::endl;
+  solution_vars_ = backtracking_line_search(solution, guess_vars_, desired_vars_, robot_model_, dt, Gamma_vec_, params_,t_msec); 
+  guess_vars_ = solution_vars_;
+  
+  data_meas[0] = guess_vars_.q_sol.data();
+  data_meas[1] = guess_vars_.v_sol.data();
+  data_meas[2] = guess_vars_.F_lsole_sol.data();
+  data_meas[3] = guess_vars_.F_rsole_sol.data();
+  data_meas[4] = guess_vars_.tau_sol.data();
+  data_meas[5] = &dt;
+  data_meas[6] = &params_.mu;
+  data_meas[7] = Gamma_vec_.data();
+  eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,csc_constraint_ );
+  dense_constraint = cscToDenseVector(csc_constraint_);
+  //std::cout << "Dense constraint after linesearch: \n" << dense_constraint.transpose() << std::endl;
 
-  solution_vars_ = backtracking_line_search(solution, guess_vars_, desired_vars_, robot_model_, dt, Gamma_vec_, params_); 
-  //guess_vars_ = solution_vars_;
   }
   pressAnyKey();
 
@@ -826,8 +865,8 @@ WholeBodyMPC::compute_inverse_dynamics(
         delta_t = walking_data.footstep_plan[1].getDuration();
         std::cout << "Delta t starting: " << delta_t << std::endl;
         desired_vars.v_sol.head(3).setZero();
-        current_CoM_pos = 0.5*(walking_data.footstep_plan.front().getFeetPlacement().getLeftFootConfiguration().p.head(2) +
-                                walking_data.footstep_plan.front().getFeetPlacement().getRightFootConfiguration().p.head(2));
+        // current_CoM_pos = 0.5*(walking_data.footstep_plan.front().getFeetPlacement().getLeftFootConfiguration().p.head(2) +
+        //                        walking_data.footstep_plan.front().getFeetPlacement().getRightFootConfiguration().p.head(2));
 
         //return;
     }
@@ -889,6 +928,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     double dt,
     const std::vector<double>& Gamma_vec,
     const WholeBodyMPCParams& params,
+    int64_t t_msec,
     // line search parameters
     double alpha_min   ,
     double theta_max   ,
@@ -897,10 +937,17 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     double gamma_phi   ,
     double gamma_theta ,
     double gamma_alpha 
+    
 ) {
     // ========================
     // Helpers
     // ========================
+
+    static std::ofstream Cost_constr ("Cost_Constr");
+
+    static std::ofstream Input("Input");
+    Cost_constr << "Time: " << t_msec << " ms ------------------\n";
+    Input << "Time: " << t_msec << " ms ------------------\n";
     auto evaluate_candidate = [&](const vars_WBNMPC& candidate_vars) {
         // vars_WBNMPC candidate_vars = guess_vars;
         // candidate_vars.fromEigen(w);
@@ -916,6 +963,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
         data_meas[6] = &params.mu;
         data_meas[7] = Gamma_vec.data();
 
+        std::cout << "Desired q sol:\n" << desired_vars.q_sol.transpose() << std::endl;
         // Cost input
         const casadi_real* data_cost[17];
         data_cost[0]  = candidate_vars.q_sol.data();
@@ -947,8 +995,9 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
                      f_total_constraint_sparsity_out, data_meas, csc_constraint_);
         Eigen::VectorXd dense_constraint = cscToDenseVector(csc_constraint_);
         //std::cout << "Dense constraint kin sumsquare: " << dense_constraint.segment(0,N_ * robot_model.nq ).squaredNorm() << std::endl;
-        std::cout << "Dense constraint Dyn: " << dense_constraint.segment(N_ * robot_model.nq ,1 * robot_model.nv ).transpose() << std::endl;
-        std::cout << "Dyn constraint sumsquare: " << dense_constraint.segment(N_ * robot_model.nq ,N_ * robot_model.nv ).squaredNorm() << std::endl;
+        //std::cout << "Dense constraint Dyn: " << dense_constraint.segment(N_ * robot_model.nq ,1 * robot_model.nv ).transpose() << std::endl;
+        //std::cout << "Dyn constraint sumsquare: " << dense_constraint.segment(N_ * robot_model.nq ,N_ * robot_model.nv ).squaredNorm() << std::endl;
+
         //std::cout << "Dense constraint Fswing: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv), 2 * 2 * 3 * N_ ).transpose() << std::endl;
         // std::cout << "Dense constraint Fswing sumsquare: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv), 2 * 2 * 3 * N_ ).squaredNorm() << std::endl;
         // //std::cout << "Dense constraint Friction: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 ), 2 * 2 * N_ ).transpose() << std::endl;
@@ -956,10 +1005,13 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
         // //std::cout << "Dense constraint feet height: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 + 2 * 2 ), 4 * N_ ).transpose() << std::endl;
         // std::cout << "Dense constraint feet height sumsquare: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 + 2 * 2 ), 4 * N_ ).squaredNorm() << std::endl;        
         //std::cout << "Dense constraint tang contact vel: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 + 2 * 2 + 4), 8 * N_ ).transpose() << std::endl;
-        std::cout << "Dense constraint tang contact vel sumsquare: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 + 2 * 2 + 4), 8 * N_ ).squaredNorm() << std::endl;
+        //std::cout << "Dense constraint tang contact vel sumsquare: " << dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 + 2 * 2 + 4), 8 * N_ ).squaredNorm() << std::endl;
         
+        Cost_constr << "Dense constraint Dyn:\n"  << dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * robot_model.nq ,N_ * robot_model.nv ).transpose() << std::endl;
+        Cost_constr << "Dyn constraint sumsquare:"  << dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * robot_model.nq ,N_ * robot_model.nv ).squaredNorm() << std::endl;
+
         //std::cout << "Dense constraint Dyn: " << dense_constraint.segment(N_ * robot_model.nq ,N_ * robot_model.nv ) << std::endl;
-        double theta_val = dense_constraint.squaredNorm()-dense_constraint.segment(N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 ), 2 * 2 * N_ ).squaredNorm();
+        double theta_val = dense_constraint.squaredNorm()-dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * (robot_model.nq + robot_model.nv + 2 * 2 * 3 ), 2 * 2 * N_ ).squaredNorm();
 
         return std::make_pair(phi_val, theta_val);
     };
@@ -998,11 +1050,13 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     double alpha = 1.0;
     Eigen::VectorXd w_next;
     bool accepted = false;
-
+    std::cout << "size of q guess: "<< guess_vars.q_sol.size() << std::endl;
     auto [phi_i, theta_i] = evaluate_candidate(guess_vars);
 
-    std::cout << "Current cost: " << phi_i << ", current constrain: " << theta_i << std::endl;
-
+    //std::cout << "Current cost: " << phi_i << ", current constrain: " << theta_i << std::endl;
+    
+    Cost_constr <<"Current cost:" << phi_i << ", current constrain: " << theta_i << std::endl;
+    std::cout << "SQP solution : \n" << delta_w.transpose() << std::endl;
     Eigen::VectorXd grad_phi_wi = compute_grad_phi(guess_vars);
     double descent_dir = grad_phi_wi.dot(delta_w);
     vars_WBNMPC candidate_vars;
@@ -1012,15 +1066,29 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     candidate_vars.F_rsole_sol.resize(guess_vars.F_rsole_sol.size());
     candidate_vars.tau_sol.resize(guess_vars.tau_sol.size());
 
+    candidate_vars.q_sol = guess_vars.q_sol;
+    candidate_vars.v_sol = guess_vars.v_sol;
+
+    int len_q = guess_vars.q_sol.size() - robot_model.nq;
+    
+    int len_v = guess_vars.v_sol.size() - robot_model.nv;
+    //Update candidate vars, but not q0 and v0
     while (!accepted && alpha >= alpha_min) {
-        candidate_vars.q_sol = guess_vars.q_sol + alpha * delta_w.segment(0, guess_vars.q_sol.size());
-        candidate_vars.v_sol = guess_vars.v_sol + alpha * delta_w.segment(guess_vars.q_sol.size(), guess_vars.v_sol.size());
-        candidate_vars.F_lsole_sol = guess_vars.F_lsole_sol + alpha * delta_w.segment(guess_vars.q_sol.size() + guess_vars.v_sol.size(), guess_vars.F_lsole_sol.size());
-        candidate_vars.F_rsole_sol = guess_vars.F_rsole_sol + alpha * delta_w.segment(guess_vars.q_sol.size() + guess_vars.v_sol.size() + guess_vars.F_lsole_sol.size(), guess_vars.F_rsole_sol.size());
-        candidate_vars.tau_sol = guess_vars.tau_sol + alpha * delta_w.segment(guess_vars.q_sol.size() + guess_vars.v_sol.size() + guess_vars.F_lsole_sol.size() + guess_vars.F_rsole_sol.size(), guess_vars.tau_sol.size());
-        
+        candidate_vars.q_sol.segment(robot_model.nq, len_q) = 
+            guess_vars.q_sol.segment(robot_model.nq, len_q) + alpha * delta_w.segment(0, len_q);
+        //std::cout << "Guess q: \n" << guess_vars.q_sol.transpose() << std::endl;
+        //std::cout << "Candidate q: \n" << candidate_vars.q_sol.transpose() << std::endl;
+        candidate_vars.v_sol.segment(robot_model.nv, len_v) = 
+            guess_vars.v_sol.segment(robot_model.nv, len_v)  + alpha * delta_w.segment(len_q, len_v);
+
+        candidate_vars.F_lsole_sol = guess_vars.F_lsole_sol + alpha * delta_w.segment(len_q + len_v, guess_vars.F_lsole_sol.size());
+        candidate_vars.F_rsole_sol = guess_vars.F_rsole_sol + alpha * delta_w.segment(len_q + len_v + guess_vars.F_lsole_sol.size(), guess_vars.F_rsole_sol.size());
+        candidate_vars.tau_sol     = guess_vars.tau_sol     + alpha * delta_w.segment(len_q + len_v + guess_vars.F_lsole_sol.size() + guess_vars.F_rsole_sol.size(), guess_vars.tau_sol.size());
+        Cost_constr << "alpha: " << alpha << std::endl;
         auto [phi_next, theta_next] = evaluate_candidate(candidate_vars);
-        std::cout << "Next cost: " << phi_next << ", next constrain: " << theta_next << ", alpha: " << alpha << std::endl;
+        //std::cout << "Next cost: " << phi_next << ", next constrain: " << theta_next << ", alpha: " << alpha << std::endl;
+
+        Cost_constr <<"Next cost:" << phi_next << ", next constrain: " << theta_next <<std::endl;
         if (theta_next > theta_max) {
             if (theta_next < (1 - gamma_theta) * theta_i) {
                 accepted = true;
@@ -1042,33 +1110,42 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
         if (!accepted) alpha *= gamma_alpha;
     }
     std::cout << "Line search alpha: " << alpha << ", accepted: " << accepted << std::endl;
+    Cost_constr << "Line search alpha: " << alpha << ", accepted: " << accepted << std::endl;
+    Cost_constr << "---------------------------------------------------------\n";
 
     
     std::cout << "Torque guess: \n" << guess_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     //std::cout << "Delta torque: \n" << delta_w.segment(guess_vars.q_sol.size() + guess_vars.v_sol.size() + guess_vars.F_lsole_sol.size() + guess_vars.F_rsole_sol.size(), guess_vars.tau_sol.size()).head(n_joints_).transpose() << std::endl;
     std::cout << "Torque candidate: \n" << candidate_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     
-    
+    Input << "Torque guess: \n" << guess_vars.tau_sol.head(n_joints_).transpose() << std::endl;
+    Input << "Torque candidate: \n" << candidate_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     // std::cout << "Desired var q: "<< desired_vars.q_sol.transpose()<< std::endl;
     // std::cout << "Desired var v: "<< desired_vars.v_sol.transpose()<< std::endl;
-    std::cout << "Desired var F_l: "<< desired_vars.F_lsole_sol.transpose()<< std::endl;
-    std::cout << "Desired var F_r: "<< desired_vars.F_rsole_sol.transpose()<< std::endl;
+    //std::cout << "Desired var F_l: "<< desired_vars.F_lsole_sol.transpose()<< std::endl;
+    //std::cout << "Desired var F_r: "<< desired_vars.F_rsole_sol.transpose()<< std::endl;
     // std::cout << "Desired var tau: "<< desired_vars.tau_sol.transpose() << std::endl;
+   
     
     
     // std::cout << "Guess var q: "<< guess_vars.q_sol.transpose()<< std::endl;
     // std::cout << "Guess var v: "<< guess_vars.v_sol.transpose()<< std::endl;
-    std::cout << "Guess var F_l: "<< guess_vars.F_lsole_sol.transpose()<< std::endl;
-    std::cout << "Guess var F_r: "<< guess_vars.F_rsole_sol.transpose()<< std::endl;
+    // std::cout << "Guess var F_l: "<< guess_vars.F_lsole_sol.transpose()<< std::endl;
+    // std::cout << "Guess var F_r: "<< guess_vars.F_rsole_sol.transpose()<< std::endl;
     // std::cout << "Guess var tau: "<< guess_vars.tau_sol.transpose() << std::endl;
+    Input << "Guess var F_l: \n" << guess_vars.F_lsole_sol.transpose()<< std::endl;
+    Input << "Guess var F_r: \n" << guess_vars.F_rsole_sol.transpose()<< std::endl;
 
     // std::cout << "Delta Force left: " << delta_w.segment(guess_vars.q_sol.size()+guess_vars.v_sol.size(),guess_vars.F_lsole_sol.size()).transpose() <<std::endl;
     // std::cout << "Delta Force right: " << delta_w.segment(guess_vars.q_sol.size()+guess_vars.v_sol.size()+guess_vars.F_lsole_sol.size(),guess_vars.F_rsole_sol.size()).transpose() <<std::endl;
 
     //std::cout << "Candidate var q: "<< candidate_vars.q_sol.transpose()<< std::endl;
     //std::cout << "Candidate var v: "<< candidate_vars.v_sol.transpose()<< std::endl;
-    std::cout << "Candidate var F_l: "<< candidate_vars.F_lsole_sol.transpose()<< std::endl;
-    std::cout << "Candidate var F_r: "<< candidate_vars.F_rsole_sol.transpose()<< std::endl;
+    // std::cout << "Candidate var F_l: "<< candidate_vars.F_lsole_sol.transpose()<< std::endl;
+    // std::cout << "Candidate var F_r: "<< candidate_vars.F_rsole_sol.transpose()<< std::endl;
+    Input << "Candidate var F_l: \n" << candidate_vars.F_lsole_sol.transpose()<< std::endl;
+    Input << "Candidate var F_r: \n" << candidate_vars.F_rsole_sol.transpose()<< std::endl;
+    Input << "--------------------------------------------- \n";
     // std::cout << "Candidate var tau: "<< candidate_vars.tau_sol.transpose() << std::endl;
 
 

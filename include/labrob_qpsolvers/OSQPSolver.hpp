@@ -29,7 +29,8 @@ class OSQPSolver : public QPSolver<double> {
     update_flag_ = 1;
     solve_flag_ = 1;
     qp_setting_ = OSQPSettings_new();
-    qp_setting_->polishing = true;                
+    qp_setting_->polishing = true;
+    qp_setting_->max_iter = 100;                
     //qp_setting_->warm_starting = true;
 
     //P_ = OSQPCscMatrix_identity(numVariables); // Initialize an identity matrix for P
