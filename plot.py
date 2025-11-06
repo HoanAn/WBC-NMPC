@@ -8,7 +8,7 @@ filename = "build/State.txt"
 sections = [
     "q measurement",
     "q0 MPC last solution",
-    "Predicted q MPC last solution",
+    "Predicted q MPC over horizon",
     "v measurement"
 ]
 

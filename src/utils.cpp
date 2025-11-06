@@ -15,6 +15,7 @@
 // hrp4_locomotion
 #include <hrp4_locomotion/SE3.hpp>
 
+#include <cstdlib>
 
 namespace labrob {
 
@@ -520,6 +521,23 @@ void pressAnyKey() {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
 
-
+void launch_plot_script() {
+    // Command to launch the plot script using python3 in the background.
+    // 'python3' might need to be 'python' or the full path depending on your system.
+    // The '&' at the end is crucial on Unix/Linux/macOS to run it in the background.
+    // For Windows, you may need 'start pythonw.exe runtime_plot_modified.py' or similar.
+    const char* command = "python3 plot.py &";
+    
+    std::cout << "Launching real-time plot...\n";
+    
+    // std::system executes the command in a subshell
+    int result = std::system(command);
+    
+    if (result != 0) {
+        std::cerr << "Error: Failed to execute plot script. Check if 'python3' is in PATH or if the file exists.\n";
+    } else {
+        std::cout << "Plot script started. Writing data to log_state.csv now.\n";
+    }
+}
 
 } // end namespace labrob

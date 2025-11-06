@@ -116,7 +116,7 @@ void saveFootstepPlan(
 
 void pressAnyKey();
 
-
+void launch_plot_script();
 
 } // end namespace labrob
 

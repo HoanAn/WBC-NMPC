@@ -517,7 +517,7 @@ int main() {
   SX f_friction (num_contact*2*N,1);
   //SX f_friction_i (num_contact*2,1);
 
-  SX f_feet_height (num_contact*2*N,1);
+  SX f_feet_height (2*2*N,1);
 
   // Reference feet height
   SX ref_toe_l_height   = SX::sym("tlh_r",N);
@@ -536,7 +536,7 @@ int main() {
   SX f_tang_contact_vel ( 6*2*N,1 );// x, y directions
 
   //
-  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*num_contact + 6*num_contact);
+  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*2 + 6*2);
   //um_constraint = N* (num_q_single_step  + num_force_single_foot_single_step*2+ 2*num_contact + 2*num_contact+4*num_contact);
   
   std::cout << "Total number of constraints: " << num_constraint << std::endl;
@@ -594,10 +594,26 @@ int main() {
                 WBNMPC_params.weight_general_qj * SX::sumsqr(delta_q_k(Slice(7, num_q_single_step)));
     //WBNMPC_params.weight_torso * SX::sumsqr(delta_q_k(Slice(3, 7))) +
     // Sum over contacts C (here, left and right feet)
-    casadi::SX cost_F = WBNMPC_params.weight_contact_force_xy * (SX::sumsqr(delta_F_lsole_k(Slice(0,2))) + SX::sumsqr(delta_F_lsole_k(Slice(3,5))) )+
-                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_lsole_k(2)) + SX::sumsqr(delta_F_lsole_k(5))) +
-                        WBNMPC_params.weight_contact_force_xy * (SX::sumsqr(delta_F_rsole_k(Slice(0,2))) + SX::sumsqr(delta_F_rsole_k(Slice(3,5))) )+
-                        WBNMPC_params.weight_contact_force_z *  (SX::sumsqr(delta_F_rsole_k(2)) + SX::sumsqr(delta_F_rsole_k(5)));
+    casadi::SX cost_F =   WBNMPC_params.weight_contact_force_xy * ( SX::sumsqr(delta_F_lsole_k(Slice(0,2))) 
+                                                                  + SX::sumsqr(delta_F_lsole_k(Slice(3,5))) 
+                                                                  + SX::sumsqr(delta_F_lsole_k(Slice(6,8))) 
+                                                                  + SX::sumsqr(delta_F_lsole_k(Slice(9,11)))
+                                                                  ) 
+                        + WBNMPC_params.weight_contact_force_z  * ( SX::sumsqr(delta_F_lsole_k(2)) 
+                                                                  + SX::sumsqr(delta_F_lsole_k(5))
+                                                                  + SX::sumsqr(delta_F_lsole_k(8))
+                                                                  + SX::sumsqr(delta_F_lsole_k(11))
+                                                                  ) 
+                        + WBNMPC_params.weight_contact_force_xy * ( SX::sumsqr(delta_F_rsole_k(Slice(0,2))) 
+                                                                  + SX::sumsqr(delta_F_rsole_k(Slice(3,5))) 
+                                                                  + SX::sumsqr(delta_F_rsole_k(Slice(6,8)))
+                                                                  + SX::sumsqr(delta_F_rsole_k(Slice(9,11)))
+                                                                  )
+                        + WBNMPC_params.weight_contact_force_z  * ( SX::sumsqr(delta_F_rsole_k(2)) 
+                                                                  + SX::sumsqr(delta_F_rsole_k(5))
+                                                                  + SX::sumsqr(delta_F_rsole_k(8))
+                                                                  + SX::sumsqr(delta_F_rsole_k(11))
+                                                                  );
 
     // Total running cost for this time step k
     casadi::SX running_cost_k = cost_v + cost_q + cost_F;
@@ -782,23 +798,40 @@ int main() {
 
 
     // From the force, compute the wrench, then use jacobian.transpose*wrench
-    SX F_lsole_heel = F_lsole_k(Slice(0, 3)); // Left sole heel forces
-    SX F_lsole_toe = F_lsole_k(Slice(3, 6)); // Left sole toe forces
-    SX F_rsole_heel = F_rsole_k(Slice(0, 3)); // Right sole heel forces
-    SX F_rsole_toe = F_rsole_k(Slice(3, 6)); // Right sole toe forces
-
+    SX F_lsole_heel_l = F_lsole_k(Slice(0, 3));  // Left sole heel left forces
+    SX F_lsole_heel_r = F_lsole_k(Slice(3, 6));  // Left sole heel right forces
+    SX F_lsole_toe_l  = F_lsole_k(Slice(6, 9));  // Left sole toe left forces
+    SX F_lsole_toe_r  = F_lsole_k(Slice(9, 12)); // Left sole toe right forces
+    
+    SX F_rsole_heel_l = F_rsole_k(Slice(0, 3));  // Right sole heel left forces
+    SX F_rsole_heel_r = F_rsole_k(Slice(3, 6));  // Right sole heel right forces
+    SX F_rsole_toe_l  = F_rsole_k(Slice(6, 9));  // Right sole toe left forces
+    SX F_rsole_toe_r  = F_rsole_k(Slice(9, 12)); // Right sole toe right forces
+    
     // Compute the wrench for left sole
-    SX toe_pos(3, 1);
-    SX heel_pos(3, 1);
-    toe_pos (0) = WBNMPC_params.foot_length/2; toe_pos (1) = 0.0; toe_pos (2) = 0.0; // Toe position in the local frame
-    heel_pos(0) = -WBNMPC_params.foot_length/2; heel_pos(1) = 0.0; heel_pos(2) = 0.0; // Heel position in the local frame
-    //TODO: Convert this vector to the world frame
+    SX heel_pos_l(3, 1);
+    SX heel_pos_r(3, 1);
+    
+    SX toe_pos_l(3, 1);
+    SX toe_pos_r(3, 1);
+
+
+    heel_pos_l(0) = -WBNMPC_params.foot_length/2; heel_pos_l(1) = WBNMPC_params.foot_width/2; heel_pos_l(2) = 0.0; // Heel left position in the local frame
+    heel_pos_r(0) = -WBNMPC_params.foot_length/2; heel_pos_r(1) = -WBNMPC_params.foot_width/2; heel_pos_r(2) = 0.0; // Heel right position in the local frame
+
+    toe_pos_l (0) = WBNMPC_params.foot_length/2; toe_pos_l (1) = WBNMPC_params.foot_width/2; toe_pos_l (2) = 0.0; // Toe left position in the local frame
+    toe_pos_r (0) = WBNMPC_params.foot_length/2; toe_pos_r (1) = -WBNMPC_params.foot_width/2; toe_pos_r (2) = 0.0; // Toe right position in the local frame
+    
+    //TODO: Convert this vector to the world frame T_lsole.rotation() * heel_pos_l??
     
 
-    SX wrench_lsole = SX::vertcat({F_lsole_heel + F_lsole_toe, 
-                                  SX::cross(toe_pos, F_lsole_toe) + SX::cross(heel_pos, F_lsole_heel)});
-    SX wrench_rsole = SX::vertcat({F_rsole_heel + F_rsole_toe,
-                                  SX::cross(toe_pos, F_rsole_toe) + SX::cross(heel_pos, F_rsole_heel)});
+    SX wrench_lsole = SX::vertcat({F_lsole_heel_l + F_lsole_heel_r + F_lsole_toe_l + F_lsole_toe_r, 
+                                   SX::cross(heel_pos_l, F_lsole_heel_l) + SX::cross(heel_pos_r, F_lsole_heel_r) + 
+                                   SX::cross(toe_pos_l, F_lsole_toe_l)   + SX::cross(toe_pos_r, F_lsole_toe_r)});
+
+    SX wrench_rsole = SX::vertcat({F_rsole_heel_l + F_rsole_heel_r + F_rsole_toe_l + F_rsole_toe_r, 
+                                   SX::cross(heel_pos_l, F_rsole_heel_l) + SX::cross(heel_pos_r, F_rsole_heel_r) + 
+                                   SX::cross(toe_pos_l, F_rsole_toe_l)   + SX::cross(toe_pos_r, F_rsole_toe_r)});
 
     std::cout << "Wrench left sole" << wrench_lsole << std::endl;
     std::cout << "Wrench right sole" << wrench_rsole << std::endl;
@@ -824,17 +857,26 @@ int main() {
     
     // f_constraint Force when in swing
     f_Fswing(Slice(k*num_force_single_foot_single_step*2,(k+1)*num_force_single_foot_single_step*2))
-    = SX::vertcat( {(1-Gam_h_l_k)*F_lsole_heel,
-                              (1-Gam_t_l_k)*F_lsole_toe,
-                              (1-Gam_h_r_k)*F_rsole_heel,
-                              (1-Gam_t_r_k)*F_rsole_toe });
+    = SX::vertcat( {(1-Gam_h_l_k)*F_lsole_heel_l,
+                    (1-Gam_h_l_k)*F_lsole_heel_r,
+                    (1-Gam_t_l_k)*F_lsole_toe_l,
+                    (1-Gam_t_l_k)*F_lsole_toe_r,
+                    (1-Gam_h_r_k)*F_rsole_heel_l,
+                    (1-Gam_h_r_k)*F_rsole_heel_r,
+                    (1-Gam_t_r_k)*F_rsole_toe_l,
+                    (1-Gam_t_r_k)*F_rsole_toe_r });
 
   // f_constraint Friction cone
     f_friction(Slice(k*2*num_contact,(k+1)*2*num_contact))
-    = SX::vertcat ( { Gam_h_l_k * (mu*F_lsole_heel(2) - SX::sqrt (F_lsole_heel(0)*F_lsole_heel(0) + F_lsole_heel(1) *F_lsole_heel(1)+0.0001)),
-                      Gam_t_l_k * (mu*F_lsole_toe(2)  - SX::sqrt (F_lsole_toe(0) *F_lsole_toe(0)  + F_lsole_toe(1)  *F_lsole_toe(1)+0.0001)),
-                      Gam_h_r_k * (mu*F_rsole_heel(2) - SX::sqrt (F_rsole_heel(0)*F_rsole_heel(0) + F_rsole_heel(1) *F_rsole_heel(1)+0.0001)),
-                      Gam_t_r_k * (mu*F_rsole_toe(2)  - SX::sqrt (F_rsole_toe(0) *F_rsole_toe(0)  + F_rsole_toe(1)  *F_rsole_toe(1)+0.0001)) } );
+    = SX::vertcat ( { Gam_h_l_k * (mu*F_lsole_heel_l(2) - SX::sqrt (F_lsole_heel_l(0)*F_lsole_heel_l(0) + F_lsole_heel_l(1)*F_lsole_heel_l(1)+0.0001)),
+                      Gam_h_l_k * (mu*F_lsole_heel_r(2) - SX::sqrt (F_lsole_heel_r(0)*F_lsole_heel_r(0) + F_lsole_heel_r(1)*F_lsole_heel_r(1)+0.0001)),
+                      Gam_t_l_k * (mu*F_lsole_toe_l(2)  - SX::sqrt (F_lsole_toe_l(0) *F_lsole_toe_l(0)  + F_lsole_toe_l(1)  *F_lsole_toe_l(1)+0.0001)),
+                      Gam_t_l_k * (mu*F_lsole_toe_r(2)  - SX::sqrt (F_lsole_toe_r(0) *F_lsole_toe_r(0)  + F_lsole_toe_r(1)  *F_lsole_toe_r(1)+0.0001)),
+                      
+                      Gam_h_r_k * (mu*F_rsole_heel_l(2) - SX::sqrt (F_rsole_heel_l(0)*F_rsole_heel_l(0) + F_rsole_heel_l(1) *F_rsole_heel_l(1)+0.0001)),
+                      Gam_h_r_k * (mu*F_rsole_heel_r(2) - SX::sqrt (F_rsole_heel_r(0)*F_rsole_heel_r(0) + F_rsole_heel_r(1) *F_rsole_heel_r(1)+0.0001)),
+                      Gam_t_r_k * (mu*F_rsole_toe_l(2)  - SX::sqrt (F_rsole_toe_l(0) *F_rsole_toe_l(0)  + F_rsole_toe_l(1)  *F_rsole_toe_l(1)+0.0001)),
+                      Gam_t_r_k * (mu*F_rsole_toe_r(2)  - SX::sqrt (F_rsole_toe_r(0) *F_rsole_toe_r(0)  + F_rsole_toe_r(1)  *F_rsole_toe_r(1)+0.0001)) } );
 
     // Reference feet height
     // Find the heel and toe position --> later
@@ -845,7 +887,7 @@ int main() {
 
 
   // f_constraint Feet height
-    f_feet_height (Slice (k*2*num_contact,(k+1)*2*num_contact))
+    f_feet_height (Slice (k*2*2,(k+1)*2*2))
     = SX::vertcat ( { heel_l_height ,
                       toe_l_height  ,
                       heel_r_height ,
@@ -871,6 +913,7 @@ int main() {
    }
   
   cs_f_total_constraint_pre = SX::vertcat ( {f_kin,f_dyn,f_Fswing, f_friction, f_feet_height, f_tang_contact_vel} );
+  std::cout << "Size of cs_f_total_constraint_pre: "<< cs_f_total_constraint_pre.size1()<<std::endl;
   //cs_f_total_constraint_pre = SX::vertcat ( {f_kin,f_Fswing, f_friction, f_feet_height, f_tang_contact_vel} );
 
   SX cs_f_total_constraint = cse(cs_f_total_constraint_pre); // Common subexpression elimination
