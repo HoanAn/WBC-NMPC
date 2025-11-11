@@ -392,7 +392,7 @@ int main() {
 
   std::cout << "Setting up casadi components" << std::endl;
 
-  int N = 10; // predicted horizion
+  int N = 15; // predicted horizion
   double d_dt = 0.001; // dynamic sample time
   double d_mu = 0.5; // friction coefficient
 
@@ -533,10 +533,10 @@ int main() {
   });
 
   // tangential contact vel
-  SX f_tang_contact_vel ( 6*2*N,1 );// x, y directions
+  SX f_tang_contact_vel ( num_contact*2*2*N,1 );// x, y directions
 
   //
-  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*2 + 6*2);
+  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*2 + num_contact*2*2);
   //um_constraint = N* (num_q_single_step  + num_force_single_foot_single_step*2+ 2*num_contact + 2*num_contact+4*num_contact);
   
   std::cout << "Total number of constraints: " << num_constraint << std::endl;
@@ -672,17 +672,17 @@ int main() {
 
 
     // Construct the B(q_k) matrix
-    // Quarternion derivative is here: https://arxiv.org/pdf/0811.2889
+    // Quarternion derivative is here, for the local body frame: https://arxiv.org/pdf/0811.2889
     SX B_qk = SX::zeros(4, 3);
-    B_qk(0, 0) = w;  B_qk(0, 1) = z;  B_qk(0, 2) = -y;
-    B_qk(1, 0) = -z; B_qk(1, 1) = w;  B_qk(1, 2) = x;
-    B_qk(2, 0) = y;  B_qk(2, 1) = -x; B_qk(2, 2) = w;
+    B_qk(0, 0) = w;  B_qk(0, 1) = -z;  B_qk(0, 2) = y;
+    B_qk(1, 0) = z; B_qk(1, 1) = w;  B_qk(1, 2) = -x;
+    B_qk(2, 0) = -y;  B_qk(2, 1) = x; B_qk(2, 2) = w;
     B_qk(3, 0) = -x; B_qk(3, 1) = -y; B_qk(3, 2) = -z;
 
     SX B_qk1 = SX::zeros(4, 3);
-    B_qk1(0, 0) = w1;  B_qk1(0, 1) = z1;  B_qk1(0, 2) = -y1;
-    B_qk1(1, 0) = -z1; B_qk1(1, 1) = w1;  B_qk1(1, 2) = x1;
-    B_qk1(2, 0) = y1;  B_qk1(2, 1) = -x1; B_qk1(2, 2) = w1;
+    B_qk1(0, 0) = w1;  B_qk1(0, 1) = -z1;  B_qk1(0, 2) = y1;
+    B_qk1(1, 0) = z1; B_qk1(1, 1) = w1;  B_qk1(1, 2) = -x1;
+    B_qk1(2, 0) = -y1;  B_qk1(2, 1) = x1; B_qk1(2, 2) = w1;
     B_qk1(3, 0) = -x1; B_qk1(3, 1) = -y1; B_qk1(3, 2) = -z1;
 
     // B_qk(0, 0) = -x; B_qk(0, 1) = -y; B_qk(0, 2) = -z;
@@ -796,6 +796,17 @@ int main() {
 
     std::cout << "J_lsole_cs size: ( " << J_lsole_cs.rows() << "," << J_lsole_cs.columns() << ")" << std::endl;
 
+        // Get rotation matrices
+    // const auto T_lsole = data_casadi.oMf[lsole_idx];
+    // const auto T_rsole = data_casadi.oMf[rsole_idx];
+    
+    SX R_lsole(3, 3), R_rsole(3, 3);
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            R_lsole(i, j) = T_lsole.rotation()(i, j);
+            R_rsole(i, j) = T_rsole.rotation()(i, j);
+        }
+    }
 
     // From the force, compute the wrench, then use jacobian.transpose*wrench
     SX F_lsole_heel_l = F_lsole_k(Slice(0, 3));  // Left sole heel left forces
@@ -823,15 +834,25 @@ int main() {
     toe_pos_r (0) = WBNMPC_params.foot_length/2; toe_pos_r (1) = -WBNMPC_params.foot_width/2; toe_pos_r (2) = 0.0; // Toe right position in the local frame
     
     //TODO: Convert this vector to the world frame T_lsole.rotation() * heel_pos_l??
-    
+    SX heel_l_w = mtimes(R_lsole, heel_pos_l);
+    SX heel_r_w = mtimes(R_lsole, heel_pos_r);
+    SX toe_l_w = mtimes(R_lsole, toe_pos_l);
+    SX toe_r_w = mtimes(R_lsole, toe_pos_r);
+
+    SX heel_l_w_r = mtimes(R_rsole, heel_pos_l);
+    SX heel_r_w_r = mtimes(R_rsole, heel_pos_r);
+    SX toe_l_w_r = mtimes(R_rsole, toe_pos_l);
+    SX toe_r_w_r = mtimes(R_rsole, toe_pos_r);
+
+
 
     SX wrench_lsole = SX::vertcat({F_lsole_heel_l + F_lsole_heel_r + F_lsole_toe_l + F_lsole_toe_r, 
-                                   SX::cross(heel_pos_l, F_lsole_heel_l) + SX::cross(heel_pos_r, F_lsole_heel_r) + 
-                                   SX::cross(toe_pos_l, F_lsole_toe_l)   + SX::cross(toe_pos_r, F_lsole_toe_r)});
+                                   SX::cross(heel_l_w, F_lsole_heel_l) + SX::cross(heel_r_w, F_lsole_heel_r) + 
+                                   SX::cross(toe_l_w, F_lsole_toe_l)   + SX::cross(toe_r_w, F_lsole_toe_r)});
 
     SX wrench_rsole = SX::vertcat({F_rsole_heel_l + F_rsole_heel_r + F_rsole_toe_l + F_rsole_toe_r, 
-                                   SX::cross(heel_pos_l, F_rsole_heel_l) + SX::cross(heel_pos_r, F_rsole_heel_r) + 
-                                   SX::cross(toe_pos_l, F_rsole_toe_l)   + SX::cross(toe_pos_r, F_rsole_toe_r)});
+                                   SX::cross(heel_l_w_r, F_rsole_heel_l) + SX::cross(heel_r_w_r, F_rsole_heel_r) + 
+                                   SX::cross(toe_l_w_r, F_rsole_toe_l)   + SX::cross(toe_r_w_r, F_rsole_toe_r)});
 
     std::cout << "Wrench left sole" << wrench_lsole << std::endl;
     std::cout << "Wrench right sole" << wrench_rsole << std::endl;
@@ -892,21 +913,58 @@ int main() {
                       toe_l_height  ,
                       heel_r_height ,
                       toe_r_height  });
+  
+
 
   // f_constraint Tangential contact velocity is zero
-    f_tang_contact_vel (Slice (k*6*2, (k+1)*6*2))
-    = SX::vertcat ( { Gam_h_l_k * cs_v_lsole(0),
-                      Gam_h_l_k * cs_v_lsole(1),
-                      Gam_h_l_k * cs_v_lsole(2),
-                      Gam_t_l_k * cs_v_lsole(3),
-                      Gam_t_l_k * cs_v_lsole(4),
-                      Gam_t_l_k * cs_v_lsole(5),
-                      Gam_h_r_k * cs_v_rsole(0),
-                      Gam_h_r_k * cs_v_rsole(1),
-                      Gam_h_r_k * cs_v_rsole(2),
-                      Gam_t_r_k * cs_v_rsole(3),
-                      Gam_t_r_k * cs_v_rsole(4),
-                      Gam_t_r_k * cs_v_rsole(5)} );
+  // Extract components
+    SX v_linear_l = SX::vertcat({v_lsole_world.linear()[0], 
+                                  v_lsole_world.linear()[1], 
+                                  v_lsole_world.linear()[2]});
+    SX omega_l = SX::vertcat({v_lsole_world.angular()[0], 
+                               v_lsole_world.angular()[1], 
+                               v_lsole_world.angular()[2]});
+    
+    SX v_linear_r = SX::vertcat({v_rsole_world.linear()[0], 
+                                  v_rsole_world.linear()[1], 
+                                  v_rsole_world.linear()[2]});
+    SX omega_r = SX::vertcat({v_rsole_world.angular()[0], 
+                               v_rsole_world.angular()[1], 
+                               v_rsole_world.angular()[2]});
+    
+
+    
+    // Transform contact positions to world frame and compute velocities
+    SX heel_pos_l_world = mtimes(R_lsole, heel_pos_l);
+    SX heel_pos_r_world = mtimes(R_lsole, heel_pos_r);
+    SX toe_pos_l_world = mtimes(R_lsole, toe_pos_l);
+    SX toe_pos_r_world = mtimes(R_lsole, toe_pos_r);
+    
+    SX v_heel_l_world_l = v_linear_l + SX::cross(omega_l, heel_pos_l_world);
+    SX v_heel_r_world_l = v_linear_l + SX::cross(omega_l, heel_pos_r_world);
+    SX v_toe_l_world_l = v_linear_l + SX::cross(omega_l, toe_pos_l_world);
+    SX v_toe_r_world_l = v_linear_l + SX::cross(omega_l, toe_pos_r_world);
+    
+    // Same for right foot
+    SX heel_pos_l_world_r = mtimes(R_rsole, heel_pos_l);
+    SX heel_pos_r_world_r = mtimes(R_rsole, heel_pos_r);
+    SX toe_pos_l_world_r = mtimes(R_rsole, toe_pos_l);
+    SX toe_pos_r_world_r = mtimes(R_rsole, toe_pos_r);
+    
+    SX v_heel_l_world_r = v_linear_r + SX::cross(omega_r, heel_pos_l_world_r);
+    SX v_heel_r_world_r = v_linear_r + SX::cross(omega_r, heel_pos_r_world_r);
+    SX v_toe_l_world_r = v_linear_r + SX::cross(omega_r, toe_pos_l_world_r);
+    SX v_toe_r_world_r = v_linear_r + SX::cross(omega_r, toe_pos_r_world_r);
+
+    f_tang_contact_vel (Slice (k*num_contact*2*2, (k+1)*num_contact*2*2))
+    = SX::vertcat ( { Gam_h_l_k * v_heel_l_world_l(0), Gam_h_l_k * v_heel_l_world_l(1),
+                      Gam_h_l_k * v_heel_r_world_l(0), Gam_h_l_k * v_heel_r_world_l(1),
+                      Gam_t_l_k * v_toe_l_world_l(0),  Gam_t_l_k * v_toe_l_world_l(1),
+                      Gam_t_l_k * v_toe_r_world_l(0),  Gam_t_l_k * v_toe_r_world_l(1),
+                      Gam_h_r_k * v_heel_l_world_r(0), Gam_h_r_k * v_heel_l_world_r(1),
+                      Gam_h_r_k * v_heel_r_world_r(0), Gam_h_r_k * v_heel_r_world_r(1),
+                      Gam_t_r_k * v_toe_l_world_r(0),  Gam_t_r_k * v_toe_l_world_r(1),
+                      Gam_t_r_k * v_toe_r_world_r(0),  Gam_t_r_k * v_toe_r_world_r(1)} );
 
     //TODO: separate heel and toe velocity, the correct sequence is toe_l(0-1), heel_l(0-1), toe_r(0-1), heel_r (0-1)
     // Total 6 f_constraint, formulas (4,5,7,8,9,10) in the ref paper.

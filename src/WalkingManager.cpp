@@ -303,7 +303,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
       robot_model_,
       q_init,
       0.001 * controller_timestep_msec_,
-      10,
+      15,
       armatures
   );
 

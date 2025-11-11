@@ -7,8 +7,8 @@ import os
 # --- Configuration ---
 LOG_FILE_PATH = "log_state.csv"
 NQ_JOINTS = 3       # Number of elements in a group (i.e., number of subplots)
-NUM_DATA_GROUPS = 11 # Total number of data groups 
-HISTORY_POINTS = 200 # How many past points to show on the persistent plots
+NUM_DATA_GROUPS = 16 # Total number of data groups 
+HISTORY_POINTS = 2000 # How many past points to show on the persistent plots
 TIME_SHIFT_STEP = 10.0 # The amount of time to shift each consecutive predicted group by (e.g., 10)
 # ---
 
@@ -34,11 +34,11 @@ for j in range(NQ_JOINTS):
         color = COLOR_GROUP_1 if k == 0 else (COLOR_GROUP_2 if k == 1 else COLOR_PREDICTION_GROUPS)
         
         # KEY FIX: Use 'None' for linestyle and a marker for prediction groups
-        linestyle = '-' if k < 2 else 'None' 
-        alpha = 1.0 if k < 2 else 0.8
+        linestyle = '-' if k < 1 else 'None' 
+        alpha = 1.0 if k < 1 else 0.8
         
-        marker = 'None' if k < 2 else 'o'
-        markersize = 0 if k < 2 else 4
+        marker = 'None' if k < 1 else 'o'
+        markersize = 0 if k < 1 else 4
 
         # Calculate indices for formatting
         j_index = j + 1
@@ -163,7 +163,7 @@ def update_plot(frame):
         for j in range(NQ_JOINTS): # j is the subplot index (0, 1, 2)
             for k in range(NUM_DATA_GROUPS): # k is the group index (0 to M-1)
                 
-                if k < 2:
+                if k < 1:
                     # Persistent Groups (k=0 and k=1)
                     lines[j][k].set_data(times, data_history[j][k])
                     

@@ -162,11 +162,11 @@ class WholeBodyMPC {
     int64_t t_msec,
     // line search parameters
     double alpha_min   = 1e-4,
-    double theta_max   = 1e-2,
-    double theta_min   = 1e-6,
-    double eta         = 1e-4,
-    double gamma_phi   = 1e-6,
-    double gamma_theta = 1e-6,
+    // double theta_max   = 1e-2,
+    // double theta_min   = 1e-6,
+    // double eta         = 1e-4,
+    // double gamma_phi   = 1e-6,
+    // double gamma_theta = 1e-6,
     double gamma_alpha = 0.5
     
   ); 
@@ -220,6 +220,10 @@ class WholeBodyMPC {
   qpsolvers::CSCMatrix_params csc_cost_;// Cost Hessian Jacobian
 
   Eigen::VectorXd g_;// Cost Jacobian
+
+  std::deque<double> cost_history_;
+  std::deque<double> constraint_history_;
+  int successful_iters_ = 0;
 
 
 

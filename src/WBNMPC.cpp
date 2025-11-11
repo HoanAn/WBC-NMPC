@@ -32,22 +32,22 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
   /// Weight needed
   params.weight_com_xy = 10; // First 2 components of vector q
   params.weight_com_z = 100; // 
-  params.weight_torso = 100; // The next fourth quaternion component of vector q
-  params.weight_general_qj = 0.001; // The rest of joint position
+  params.weight_torso = 1000; // The next fourth quaternion component of vector q
+  params.weight_general_qj = 1; // The rest of joint position
 
-  params.weight_general_vb = 1; // The first three components of vector v (linear velocity of the base)
-  params.weight_general_omega_b = 10; // The next three components of vector v (angular velocity of the base)
-  params.weight_general_v = 0.001; // The rest of joint velocity
+  params.weight_general_vb = 0.1; // The first three components of vector v (linear velocity of the base)
+  params.weight_general_omega_b = 0.1; // The next three components of vector v (angular velocity of the base)
+  params.weight_general_v = 0.01; // The rest of joint velocity
 
-  params.weight_contact_force_xy = 0.001; // Contact forces in x and y direction
-  params.weight_contact_force_z = 0.001; // Contact forces in z direction
+  params.weight_contact_force_xy = 0.1; // Contact forces in x and y direction
+  params.weight_contact_force_z = 0.1; // Contact forces in z direction
 
   params.cmm_selection_matrix_x = 1e-6;
   params.cmm_selection_matrix_y = 1e-6;
   params.cmm_selection_matrix_z = 1e-4;
 
   params.gamma = params.Kd_motion;
-  params.mu = 0.3;
+  params.mu = 0.5;
 
   params.foot_length = 0.17;
   params.foot_width = 0.05; 
@@ -74,17 +74,14 @@ WholeBodyMPC::WholeBodyMPC(
   lsole_idx_ = robot_model_.getFrameId("left_foot_link");
   rsole_idx_ = robot_model_.getFrameId("right_foot_link");
   torso_idx_ = robot_model_.getFrameId("torso_link");
-  pelvis_idx_ = robot_model_.getFrameId("pelvis");
+  //pelvis_idx_ = robot_model_.getFrameId("pelvis");
 
   J_torso_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
   J_pelvis_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
   J_lsole_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
   J_rsole_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
 
-  J_torso_dot_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
-  J_pelvis_dot_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
-  J_lsole_dot_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
-  J_rsole_dot_ = Eigen::MatrixXd::Zero(6, robot_model_.nv);
+  
 
   n_joints_ = robot_model.nv - 6;
 
@@ -107,7 +104,7 @@ WholeBodyMPC::WholeBodyMPC(
                                                                   num_force_single_foot_single_step*2 + // f_Fswing
                                                                   2*num_contact + // f_friction
                                                                   2*2 + // f_feet_height
-                                                                  6*2); // f_tang_contact_vel
+                                                                  num_contact*2*2); // f_tang_contact_vel
 
   n_wbnmpc_variables_ = num_q + num_v + num_torques + 2 * num_force; // ca_q, ca_v,  tau, F_lsole, F_rsole
   n_wbnmpc_equalities_ = num_constraint - N * 2 * num_contact; // excluding the friction
@@ -125,16 +122,6 @@ WholeBodyMPC::WholeBodyMPC(
     M_armature_(joint_id - 2) = armatures[joint_name];
   }
 
-  //update_weight_Hessian(params_, num_q_single_step, num_v_single_step, num_torques_single_step, num_force_single_foot_single_step*2);
-
-  
-
-
-
-  
-  // Dict codegen_options;
-  // codegen_options["with_header"] = true;
-  // eval_Jacob_rnea_.generate("eval_Jacob_rnea", codegen_options);
 
   // Intialize the size  for the guess vars
 
@@ -218,37 +205,43 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
                                       const int prediction_horizon, const bool init)
 {
   static std::ofstream Guess_print ("Guess.txt");
-  double total_mass = 0.0;
+  
+  
+  // std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
+  // std::cout << "Initial tau from RNEA without contact forces test: \n" << tau_init_test.transpose() << std::endl;
+  // std::cout << "Initial tau from RNEA with contact forces: \n" << tau_rnea.transpose() << std::endl;
+  // std::cout << "Init " << init << std::endl;
+  if (init){
+    double total_mass = 0.0;
     for (const auto &inertial : robot_model.inertias) {
         total_mass += inertial.mass();
     }
-  pinocchio::FrameIndex lsole_idx = robot_model.getFrameId("left_foot_link");
-  pinocchio::FrameIndex rsole_idx = robot_model.getFrameId("right_foot_link");
-  pinocchio::FrameIndex torso_idx = robot_model.getFrameId("torso_link");
-  pinocchio::FrameIndex pelvis_idx = robot_model.getFrameId("pelvis");
-  auto lsole_frame = robot_model.frames[lsole_idx];
-  pinocchio::JointIndex lsole_parent_joint = lsole_frame.parent;
-
-  auto rsole_frame = robot_model.frames[rsole_idx];
-  pinocchio::JointIndex rsole_parent_joint = rsole_frame.parent;
-
-  Eigen::MatrixXd J_lsole = Eigen::MatrixXd::Zero(6, robot_model.nv);
-  Eigen::MatrixXd J_rsole = Eigen::MatrixXd::Zero(6, robot_model.nv);
-  pinocchio::computeJointJacobians(robot_model, robot_data, q);
-  pinocchio::framesForwardKinematics(robot_model, robot_data, q);
+    pinocchio::FrameIndex lsole_idx = robot_model.getFrameId("left_foot_link");
+    pinocchio::FrameIndex rsole_idx = robot_model.getFrameId("right_foot_link");
+    pinocchio::FrameIndex torso_idx = robot_model.getFrameId("torso_link");
+    pinocchio::FrameIndex pelvis_idx = robot_model.getFrameId("pelvis");
+    auto lsole_frame = robot_model.frames[lsole_idx];
+    auto rsole_frame = robot_model.frames[rsole_idx];
+    
+    Eigen::MatrixXd J_lsole = Eigen::MatrixXd::Zero(6, robot_model.nv);
+    Eigen::MatrixXd J_rsole = Eigen::MatrixXd::Zero(6, robot_model.nv);
+    pinocchio::forwardKinematics(robot_model_, robot_data_, q);
+    //pinocchio::jacobianCenterOfMass(robot_model_, robot_data_, q);
+    pinocchio::framesForwardKinematics(robot_model_, robot_data_, q);
+    pinocchio::computeJointJacobians(robot_model_, robot_data_, q);
   // std::cout << "lsole frame position" << robot_data.oMf[lsole_idx] << std::endl;
   // std::cout << "torso frame position" << robot_data.oMf[torso_idx] << std::endl;
   // std::cout << "pelvis frame position" << robot_data.oMf[pelvis_idx] << std::endl;
-  pinocchio::getFrameJacobian(
+    pinocchio::getFrameJacobian(
         robot_model,
         robot_data,
         lsole_idx,
         pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED,
         J_lsole
     );
-  Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
-  //std::cout << "J_lsole:\n" << J_lsole.transpose().format(CleanFmt) << std::endl;
-  pinocchio::getFrameJacobian(
+    Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
+  std::cout << "J_lsole:\n" << J_lsole.transpose().format(CleanFmt) << std::endl;
+    pinocchio::getFrameJacobian(
         robot_model,
         robot_data,
         rsole_idx,
@@ -260,137 +253,90 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
 
  
 
-  Eigen::VectorXd qdot_init = Eigen::VectorXd::Zero(robot_model.nv);
-  Eigen::VectorXd qddot = Eigen::VectorXd::Zero(robot_model.nv);
+    Eigen::VectorXd qdot_init = Eigen::VectorXd::Zero(robot_model.nv);
+    Eigen::VectorXd qddot = Eigen::VectorXd::Zero(robot_model.nv);
 
-  Eigen::VectorXd F_lsole_init = Eigen::VectorXd::Zero(12);
-  Eigen::VectorXd F_rsole_init = Eigen::VectorXd::Zero(12);
-  F_lsole_init(2) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_lsole_init(5) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_lsole_init(8) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_lsole_init(11) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    Eigen::VectorXd F_lsole_init = Eigen::VectorXd::Zero(12);
+    Eigen::VectorXd F_rsole_init = Eigen::VectorXd::Zero(12);
+    F_lsole_init(2) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_lsole_init(5) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_lsole_init(8) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_lsole_init(11) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
 
-  F_rsole_init(2) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_rsole_init(5) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_rsole_init(8) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
-  F_rsole_init(11) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_rsole_init(2) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_rsole_init(5) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_rsole_init(8) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
+    F_rsole_init(11) = total_mass*1 * 9.81 / 8.0; // Quarter of the weight on each contact point/foot
 
-  pinocchio::rnea(robot_model, robot_data, q, qdot, qddot);
+    pinocchio::rnea(robot_model, robot_data, q, qdot, qddot);
 
-  Eigen::VectorXd tau_init = Eigen::VectorXd::Zero(robot_model.nv);
-  Eigen::Map<pinocchio::Model::TangentVectorType>(tau_init.data(), robot_model.nv, 1) = robot_data.tau;
-  std::cout << "Initial tau from RNEA: \n" << tau_init.transpose() << std::endl;
-  Eigen::VectorXd tau_base = tau_init.head(6); 
+    Eigen::VectorXd tau_init = Eigen::VectorXd::Zero(robot_model.nv);
+    Eigen::Map<pinocchio::Model::TangentVectorType>(tau_init.data(), robot_model.nv, 1) = robot_data.tau;
+    std::cout << "Initial tau from RNEA: \n" << tau_init.transpose() << std::endl;
+    Eigen::VectorXd tau_base = tau_init.head(6); 
 
   //Eigen::VectorXd
 
-  Eigen::Vector3d F_lsole_heel_l_init = F_lsole_init.head(3);
-  Eigen::Vector3d F_lsole_heel_r_init = F_lsole_init.segment(3,3);
-  Eigen::Vector3d F_lsole_toe_l_init = F_lsole_init.segment(6,3);
-  Eigen::Vector3d F_lsole_toe_r_init = F_lsole_init.tail(3);
+    Eigen::Vector3d F_lsole_heel_l_init = F_lsole_init.head(3);
+    Eigen::Vector3d F_lsole_heel_r_init = F_lsole_init.segment(3,3);
+    Eigen::Vector3d F_lsole_toe_l_init = F_lsole_init.segment(6,3);
+    Eigen::Vector3d F_lsole_toe_r_init = F_lsole_init.tail(3);
 
-  Eigen::Vector3d F_rsole_heel_l_init = F_rsole_init.head(3);
-  Eigen::Vector3d F_rsole_heel_r_init = F_rsole_init.segment(3,3);
-  Eigen::Vector3d F_rsole_toe_l_init = F_rsole_init.segment(6,3);
-  Eigen::Vector3d F_rsole_toe_r_init = F_rsole_init.tail(3);
+    Eigen::Vector3d F_rsole_heel_l_init = F_rsole_init.head(3);
+    Eigen::Vector3d F_rsole_heel_r_init = F_rsole_init.segment(3,3);
+    Eigen::Vector3d F_rsole_toe_l_init = F_rsole_init.segment(6,3);
+    Eigen::Vector3d F_rsole_toe_r_init = F_rsole_init.tail(3);
 
-  Eigen::Vector3d heel_l_pos_vec = Eigen::Vector3d(-params_.foot_length/2, params_.foot_width/2, 0.0); // Heel_left position in the local frame
-  Eigen::Vector3d heel_r_pos_vec = Eigen::Vector3d(-params_.foot_length/2, -params_.foot_width/2, 0.0); // Heel_right position in the local frame
+    Eigen::Vector3d heel_l_pos_local = Eigen::Vector3d(-params_.foot_length/2, params_.foot_width/2, 0.0); // Heel_left position in the local frame
+    Eigen::Vector3d heel_r_pos_local = Eigen::Vector3d(-params_.foot_length/2, -params_.foot_width/2, 0.0); // Heel_right position in the local frame
   
-  Eigen::Vector3d toe_l_pos_vec = Eigen::Vector3d(params_.foot_length/2, params_.foot_width/2, 0.0); // Toe_left position in the local frame
-  Eigen::Vector3d toe_r_pos_vec = Eigen::Vector3d(params_.foot_length/2, -params_.foot_width/2, 0.0); // Toe_right position in the local frame
+    Eigen::Vector3d toe_l_pos_local = Eigen::Vector3d(params_.foot_length/2, params_.foot_width/2, 0.0); // Toe_left position in the local frame
+    Eigen::Vector3d toe_r_pos_local = Eigen::Vector3d(params_.foot_length/2, -params_.foot_width/2, 0.0); // Toe_right position in the local frame
   
-  // Eigen::Matrix3d R_world_lfoot = robot_data.oMf[lsole_idx].rotation();
-  // Eigen::Matrix3d R_world_rfoot = robot_data.oMf[rsole_idx].rotation();
+    Eigen::Matrix3d R_world_lfoot = robot_data.oMf[lsole_idx].rotation();
+    Eigen::Matrix3d R_world_rfoot = robot_data.oMf[rsole_idx].rotation();
 
-  // Eigen::Vector3d ltoe_pos_vec_world = R_world_lfoot * toe_pos_vec;
-  // Eigen::Vector3d lheel_pos_vec_world = R_world_lfoot * heel_pos_vec;
-
-  // Eigen::Vector3d rtoe_pos_vec_world = R_world_rfoot * toe_pos_vec;
-  // Eigen::Vector3d rheel_pos_vec_world = R_world_rfoot * heel_pos_vec;
-
-std::vector<Eigen::Vector3d> pcis(4);
-  pcis[0] <<  -params_.foot_length / 2.0, 0.0, 0.0;
-  pcis[1] <<  params_.foot_length / 2.0, 0.0, 0.0;
-  pcis[2] << -params_.foot_length / 2.0, 0.0, 0.0;
-  pcis[3] << -params_.foot_length / 2.0, 0.0, 0.0;
-
-  std::vector<Eigen::Vector3d> pcis_l(4);
-  std::vector<Eigen::Vector3d> pcis_r(4);
-
-  for (int i = 0; i < n_contacts_; ++i) {
-    pcis_l[i] = pcis[i];
-    pcis_r[i] = pcis[i];
-  }
-
-  Eigen::MatrixXd T_l(6, 3 * n_contacts_);
-  Eigen::MatrixXd T_r(6, 3 * n_contacts_);
-  Eigen::Matrix3d I3 = Eigen::Matrix3d::Identity();
-  T_l << I3, I3,
-         pinocchio::skew(pcis_l[0]), pinocchio::skew(pcis_l[1]);
-  T_r << I3, I3,
-         pinocchio::skew(pcis_r[0]), pinocchio::skew(pcis_r[1]);
-  
-  // std::cout << "T_l: \n" << T_l << std::endl;
-  // std::cout << "T_r: \n" << T_r << std::endl;
+    Eigen::Vector3d heel_l_pos_world_L = R_world_lfoot * heel_l_pos_local;
+    Eigen::Vector3d heel_r_pos_world_L = R_world_lfoot * heel_r_pos_local;
+    Eigen::Vector3d toe_l_pos_world_L  = R_world_lfoot * toe_l_pos_local;
+    Eigen::Vector3d toe_r_pos_world_L  = R_world_lfoot * toe_r_pos_local;
+        
+    Eigen::Vector3d heel_l_pos_world_R = R_world_rfoot * heel_l_pos_local;
+    Eigen::Vector3d heel_r_pos_world_R = R_world_rfoot * heel_r_pos_local;
+    Eigen::Vector3d toe_l_pos_world_R  = R_world_rfoot * toe_l_pos_local;
+    Eigen::Vector3d toe_r_pos_world_R  = R_world_rfoot * toe_r_pos_local;
 
 
 
-  Eigen::VectorXd wrench_lsole_init(6);
-  Eigen::VectorXd wrench_rsole_init(6);
-  wrench_lsole_init.head(3) = F_lsole_heel_l_init + F_lsole_heel_r_init + F_lsole_toe_l_init + F_lsole_toe_r_init;
-  wrench_lsole_init.tail(3) =   heel_l_pos_vec.cross(F_lsole_heel_l_init) + heel_r_pos_vec.cross(F_lsole_heel_r_init) 
-                              + toe_l_pos_vec.cross(F_lsole_toe_l_init) + toe_r_pos_vec.cross(F_lsole_toe_r_init);
 
-  wrench_rsole_init.head(3) = F_rsole_heel_l_init + F_rsole_heel_r_init + F_rsole_toe_l_init + F_rsole_toe_r_init;
-  wrench_rsole_init.tail(3) = heel_l_pos_vec.cross(F_rsole_heel_l_init) + heel_r_pos_vec.cross(F_rsole_heel_r_init) 
-                              + toe_l_pos_vec.cross(F_rsole_toe_l_init) + toe_r_pos_vec.cross(F_rsole_toe_r_init);
+    Eigen::VectorXd wrench_lsole_init(6);
+    Eigen::VectorXd wrench_rsole_init(6);
+    wrench_lsole_init.head(3) = F_lsole_heel_l_init + F_lsole_heel_r_init + F_lsole_toe_l_init + F_lsole_toe_r_init;
+    wrench_lsole_init.tail(3) =   heel_l_pos_world_L.cross(F_lsole_heel_l_init) + heel_r_pos_world_L.cross(F_lsole_heel_r_init) 
+                              + toe_l_pos_world_L.cross(F_lsole_toe_l_init) + toe_r_pos_world_L.cross(F_lsole_toe_r_init);
 
-  // std::cout << "Initial wrench left sole: \n" << wrench_lsole_init.transpose() << std::endl;
-  // std::cout << "Initial wrench right sole: \n" << wrench_rsole_init.transpose() << std::endl;
+    wrench_rsole_init.head(3) = F_rsole_heel_l_init + F_rsole_heel_r_init + F_rsole_toe_l_init + F_rsole_toe_r_init;
+    wrench_rsole_init.tail(3) = heel_l_pos_world_R.cross(F_rsole_heel_l_init) + heel_r_pos_world_R.cross(F_rsole_heel_r_init) 
+                              + toe_l_pos_world_R.cross(F_rsole_toe_l_init) + toe_r_pos_world_R.cross(F_rsole_toe_r_init);
 
-  pinocchio:: Force wrench_l(wrench_lsole_init.head<6>());
-  pinocchio:: Force wrench_r(wrench_rsole_init.head<6>());
-
-  // wrench_l = robot_data.oMf[lsole_idx].act(wrench_l);
-  // wrench_r = robot_data.oMf[rsole_idx].act(wrench_r);
-
-
-  std::vector<pinocchio::Force, Eigen::aligned_allocator<pinocchio::Force>> fs_ext(robot_model.njoints, pinocchio::Force::Zero());
-  fs_ext[lsole_parent_joint] = robot_data.oMf[lsole_idx].actInv(wrench_l);
-  fs_ext[rsole_parent_joint] = robot_data.oMf[rsole_idx].actInv(wrench_r);
-
-  Eigen::VectorXd tau_rnea = pinocchio::rnea(robot_model, robot_data, q, qdot_init, qddot, fs_ext);
-
-  std::cout << "Floating base: " << robot_model.names[1] << std::endl;
+  std::cout << "Initial wrench left sole: \n" << wrench_lsole_init.transpose() << std::endl;
+  std::cout << "Initial wrench right sole: \n" << wrench_rsole_init.transpose() << std::endl;
 
   // std::cout << "Initial wrench left sole in world frame: \n" << wrench_l.toVector().transpose() << std::endl;
   // std::cout << "Initial wrench right sole in world frame: \n" << wrench_r.toVector().transpose() << std::endl;
 
   //Eigen::VectorXd tau_init_test = Eigen::VectorXd::Zero(robot_model.nv);
   //tau_init_test = tau_init - J_lsole.transpose() * T_l * F_lsole_init - J_rsole.transpose() * T_r * F_rsole_init;
-  tau_init = tau_init - J_lsole.transpose() * wrench_lsole_init - J_rsole.transpose() * wrench_rsole_init;
-  // tau_init.segment(0,6) =  - wrench_lsole_init;
-  // tau_init.segment(6,6) =  - wrench_rsole_init;
-  // std::cout << "External force transform: "<< (- J_lsole.transpose() * wrench_l.toVector() - J_rsole.transpose() * wrench_r.toVector()).transpose() << std::endl;
-  // std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
-  // std::cout << "Initial tau from RNEA without contact forces test: \n" << tau_init_test.transpose() << std::endl;
-  // std::cout << "Initial tau from RNEA with contact forces: \n" << tau_rnea.transpose() << std::endl;
-  // std::cout << "Init " << init << std::endl;
-  if (init){
+    tau_init = tau_init - J_lsole.transpose() * wrench_lsole_init - J_rsole.transpose() * wrench_rsole_init;
+    std::cout << "Initial tau after considering contact forces: \n" << tau_init.transpose() << std::endl;
+
     guess_vars_.q_sol = q.replicate(prediction_horizon+1,1);
     guess_vars_.v_sol = qdot.replicate(prediction_horizon+1,1);
     guess_vars_.F_lsole_sol = F_lsole_init.replicate(prediction_horizon,1);
     guess_vars_.F_rsole_sol = F_rsole_init.replicate(prediction_horizon,1);
     guess_vars_.tau_sol = tau_init.tail(robot_model.nv-6).replicate(prediction_horizon,1);
   };  
-  // for (int i = 0; i < prediction_horizon; i++){
-  //   //Eigen::Map<pinocchio::Model::ConfigVectorType>(guess_vars_.q_sol.data()+(i+1)*robot_model.nq, robot_model.nq, 1) = q_init;
-  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.v_sol.data()+(i+1)*robot_model.nv, robot_model.nv, 1) = Eigen::VectorXd::Zero(robot_model.nv);
-  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.F_lsole_sol.data()+i*6, 6, 1) = F_lsole_init;
-  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.F_rsole_sol.data()+i*6, 6, 1) = F_rsole_init;
-  //   Eigen::Map<pinocchio::Model::TangentVectorType>(guess_vars_.tau_sol.data()+i*(robot_model.nv-6), robot_model.nv-6, 1) = tau_init.tail(robot_model.nv-6);
-  // };
+  
   
   if(!init){
 
@@ -406,22 +352,30 @@ std::vector<Eigen::Vector3d> pcis(4);
     //guess_vars_ = solution_vars_; // Warm start with the previous solution
     guess_vars_.q_sol.head(robot_model.nq) = q;
     guess_vars_.v_sol.head(robot_model.nv) = qdot;
-    
-    // Shifted the previous solution to the left
-    // guess_vars_.q_sol.segment(robot_model.nq, (N_-2)*robot_model.nq) = solution_vars_.q_sol.segment(2*robot_model.nq, (N_-2)*robot_model.nq);
+  
+    //Shifted the previous solution to the left
+    // guess_vars_.q_sol.segment(robot_model.nq, (N_-1)*robot_model.nq) = solution_vars_.q_sol.segment(2*robot_model.nq, (N_-1)*robot_model.nq);
     // guess_vars_.q_sol.tail(robot_model.nq) = solution_vars_.q_sol.tail(robot_model.nq);
-
-    // guess_vars_.v_sol.segment(robot_model.nv, (N_-2)*robot_model.nv) = solution_vars_.v_sol.segment(2*robot_model.nv, (N_-2)*robot_model.nv);
+    // for (int i=0; i<N_+1; i++){
+    //     // Normalize the quaternion part
+    //     guess_vars_.q_sol.segment(i*robot_model.nq +3,4) /= guess_vars_.q_sol.segment(i*robot_model.nq +3,4).norm();
+        
+    // }
+    // guess_vars_.v_sol.segment(robot_model.nv, (N_-1)*robot_model.nv) = solution_vars_.v_sol.segment(2*robot_model.nv, (N_-1)*robot_model.nv);
     // guess_vars_.v_sol.tail(robot_model.nv) = solution_vars_.v_sol.tail(robot_model.nv);
 
-    // guess_vars_.F_lsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_lsole_sol.segment(6,(N_-1)*6);
-    // guess_vars_.F_lsole_sol.tail(6) = solution_vars_.F_lsole_sol.tail(6);
-    // guess_vars_.F_rsole_sol.segment(0,(N_-1)*6) = solution_vars_.F_rsole_sol.segment(6,(N_-1)*6);
-    // guess_vars_.F_rsole_sol.tail(6) = solution_vars_.F_rsole_sol.tail(6);
+    // guess_vars_.F_lsole_sol.segment(0,(N_-1)*12) = solution_vars_.F_lsole_sol.segment(12,(N_-1)*12);
+    // guess_vars_.F_lsole_sol.tail(12) = solution_vars_.F_lsole_sol.tail(12);
+    // guess_vars_.F_rsole_sol.segment(0,(N_-1)*12) = solution_vars_.F_rsole_sol.segment(12,(N_-1)*12);
+    // guess_vars_.F_rsole_sol.tail(12) = solution_vars_.F_rsole_sol.tail(12);
 
     // guess_vars_.tau_sol.segment(0,(N_-1)*(robot_model.nv-6)) = solution_vars_.tau_sol.segment(robot_model.nv-6,(N_-1)*(robot_model.nv-6));
     // guess_vars_.tau_sol.tail(robot_model.nv-6) = solution_vars_.tau_sol.tail(robot_model.nv-6);
+    
+    
 
+
+    
 
 
 
@@ -448,8 +402,9 @@ std::vector<Eigen::Vector3d> pcis(4);
     // std::cout << "Update the torque guess also" << std::endl;
     // guess_vars_.F_lsole_sol = F_lsole_init.replicate(prediction_horizon,1);
     // guess_vars_.F_rsole_sol = F_rsole_init.replicate(prediction_horizon,1);
-
+  
   }
+
   Guess_print << "q last solution:\n" << solution_vars_.q_sol.transpose() << std::endl;
   Guess_print << "v last solution:\n" << solution_vars_.v_sol.transpose() << std::endl;
   Guess_print << "F_lsole last solution:\n" << solution_vars_.F_lsole_sol.transpose() << std::endl;
@@ -492,7 +447,7 @@ WholeBodyMPC::compute_inverse_dynamics(
 ) {
 
   auto start_time = std::chrono::high_resolution_clock::now();
-  double dt = 0.01;
+  double dt = 0.02;
 
    auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
    //std::cout << "Current q: " << q.transpose() << std::endl;
@@ -502,11 +457,11 @@ WholeBodyMPC::compute_inverse_dynamics(
   // Update for the q0 and v0
   //  guess_vars_.q_sol.head(robot_model.nq) = q;
   //  guess_vars_.v_sol.head(robot_model.nv) = qdot;
-  if(t_msec % 10 == 0){
+  if(t_msec % 5 == 0){
   if (t_msec != 0)
     update_guess(robot_model, robot_data, q, qdot, N_, false);
   
-  if(t_msec == 10){
+  if(t_msec == 5){
     launch_plot_script();
   }
   static std::ofstream State_print ("State.txt");
@@ -537,11 +492,21 @@ WholeBodyMPC::compute_inverse_dynamics(
   static std::ofstream log_file ("log_state.csv");
   log_file << t_msec << ", ";
      log_file << guess_vars_.q_sol.head(3).transpose() << ", ";
-  for (int i = 0; i < N_; i++){
+  for (int i = 1; i < N_+1; i++){
     log_file << solution_vars_.q_sol.segment(i*robot_model_.nq,3).transpose() << ", ";
   }
   log_file << "\n";
   log_file.flush();
+
+
+    static std::ofstream log_file_vel ("log_state_vel.csv");
+  log_file_vel << t_msec << ", ";
+     log_file_vel << guess_vars_.v_sol.head(3).transpose() << ", ";
+  for (int i = 1; i < N_+1; i++){
+    log_file_vel << solution_vars_.v_sol.segment(i*robot_model_.nv,3).transpose() << ", ";
+  }
+  log_file_vel << "\n";
+  log_file_vel.flush();
   
 
 
@@ -615,8 +580,8 @@ WholeBodyMPC::compute_inverse_dynamics(
   u_g.segment(0*robot_model.nq + 0*robot_model.nv + N_*(robot_model.nq+robot_model.nv+ 2*3* n_contacts_), n_wbnmpc_inequalities_).setConstant(1e3);
   u_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*n_contacts_) + n_wbnmpc_inequalities_, 2*2*N_).setConstant(0.2);
   l_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*n_contacts_) + n_wbnmpc_inequalities_, 2*2*N_).setConstant(-0.2);
-  u_g.tail(12*N_).setConstant(1);
-  l_g.tail(12*N_).setConstant(-1);
+  // u_g.tail(16*N_).setConstant(0.1);
+  // l_g.tail(16*N_).setConstant(-0.1);
   //u_g.segment(0, robot_model.nq) = q;
   //u_g.segment(robot_model.nq, robot_model.nv) = qdot;
   //l_g.segment(0, robot_model.nq) = q;
@@ -667,7 +632,7 @@ WholeBodyMPC::compute_inverse_dynamics(
   //std::cout << "Dense constraint after linesearch: \n" << dense_constraint.transpose() << std::endl;
 
   }
-  pressAnyKey();
+
 
 
   }
@@ -684,7 +649,7 @@ WholeBodyMPC::compute_inverse_dynamics(
   for(pinocchio::JointIndex joint_id = 2; joint_id < (pinocchio::JointIndex) robot_model.njoints; ++joint_id) {
     const auto& joint_name = robot_model.names[joint_id];
     joint_command[joint_name] = solution_vars_.tau_sol[joint_id - 2];
-    //std::cout << "Joint: " << joint_name << " Command: " << joint_command[joint_name] << std::endl;
+    std::cout << "Joint: " << joint_name << " Command: " << joint_command[joint_name] << std::endl;
   }
   
   //pressAnyKey();
@@ -758,130 +723,7 @@ WholeBodyMPC::compute_inverse_dynamics(
   //std::cout<< "End of eval" << std::endl;
 }
 
-// don't need this function if we use the casadi codegen to get the weight matrix
-//   void WholeBodyMPC::update_weight_Hessian(WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force){
-//   //wbnmpc_solver_ptr_->solve_CSC()
-//   //int size = num_q + num_v +
-//     int num_var = num_q+num_v+num_force+num_torque;// var per step
-//     int num_qj = num_q -7;
-//     int num_vj = num_v -6;
-//     int num_q_v = num_q + num_v;
-//     std::cout << "Updating weight structure..." << std::endl;
-//     std::cout << "num_q: " << num_q << std::endl;
-//     std::cout << "num_v: " << num_v << std::endl;
-//     std::cout << "num_vars: " << num_var << std::endl;
-//     //int num_q_v_f = num_q_v + num_force_step;
-//     Eigen::VectorXd diag = Eigen::VectorXd::Zero(n_wbnmpc_variables_);
 
-//     for (int i = 0; i < N_; i++) {
-//         int offset = i * num_q;
-//         // q
-//         diag.segment(offset, 3).setConstant(params.weight_com);             // COM (3)
-//         diag.segment(offset + 3, 4).setConstant(params.weight_torso);       // Torso (4)
-//         diag.segment(offset + 7, num_qj).setConstant(params.weight_general_qj); // Joints qj
-//     }
-//     for (int i = 0; i < N_; i++){
-//         // v
-//         int v_off =  (N_+1)*num_q + i*num_v;
-//         diag.segment(v_off, 3).setConstant(params.weight_general_vb);       // Linear vel
-//         diag.segment(v_off + 3, 3).setConstant(params.weight_general_omega_b); // Angular vel
-//         diag.segment(v_off + 6, num_vj).setConstant(params.weight_general_v);   // Joint v
-//     }
-//     for (int i = 0; i < 4*N_; i++) {
-//         // forces (each contact: XY(2) + Z(1))
-//         int f_off =  (N_+1)*num_q_v + i*3;// one force includes x, y, z, i.e 3 components
-//          // 4 contacts: heel/toe left/right
-//             diag.segment(f_off, 2).setConstant(params.weight_contact_force_xy);// 3 is the size of each contact force vector
-//             diag(f_off + 2) = params.weight_contact_force_z;//2 is the offset caused by x,y components
-        
-//     }
-//     std::cout << "Weight diag: \n" << diag.transpose() << std::endl;    
-
-//         // torques (uncomment if needed)
-//         // int tau_off = offset + num_q_v + num_force;
-//         // diag.segment(tau_off, num_torque).setConstant(params.weight_torque);
-
-//     // build diagonal matrix (if solver really needs a full MatrixXd)
-//     Eigen::MatrixXd P = diag.asDiagonal();
-//     std::cout << "Write Weight matrix P to file: \n" << std::endl;
-//     std::ofstream Weight_dense("Weight_P.txt");
-    
-//     if (Weight_dense.is_open()) {
-//       Weight_dense << "Weight_P:\n";
-//       for (int i = 0; i < P.rows(); ++i) {
-//         for (int j = 0; j < P.cols(); ++j) {
-//             Weight_dense << std::fixed << std::setprecision(6) 
-//                          << std::setw(10) << P(i, j);
-//         }
-//         Weight_dense << "\n";
-//       }
-//     }
-//     P_ = qpsolvers::denseToCSC_param( P.data(), P.rows(), P.cols() );
-//     std::cout << "Weight matrix P in CSC format: \n" << std::endl;
-//     for (long long i = 0; i < P_.nzeros; i++){
-//       std::cout << P_.data[i] << ", ";
-//     }
-//     std::cout << std::endl;
-//     std::cout << "P_ nrows: " << P_.nrows << ", ncols: " << P_.ncols << ", nzeros: " << P_.nzeros << std::endl;
-//   }
-// // don't need this function if we use the casadi codegen to get the weight matrix
-//   void WholeBodyMPC::update_weigtht_Jacobian(WholeBodyMPCParams params, int num_q, int num_v, int num_torque, int num_force){
-//     int num_var = num_q+num_v+num_force+num_torque;// var per step
-//     int num_qj = num_q -7;
-//     int num_vj = num_v -6;
-//     int num_q_v = num_q + num_v;
-//     // std::cout << "Updating weight structure for Jacobian..." << std::endl;
-//     // std::cout << "num_q: " << num_q << std::endl;
-//     // std::cout << "num_v: " << num_v << std::endl;
-//     // std::cout << "num_vars: " << num_var << std::endl;
-//     //int num_q_v_f = num_q_v + num_force_step;
-//     for (int i = 0; i < N_; i++){
-//      int offset = i * num_q;
-//         // q terms
-//         g_.segment(offset, 3) = params.weight_com *
-//             (guess_vars_.q_sol.segment(offset, 3) - desired_vars_.q_sol.segment(offset, 3));
-
-//         g_.segment(offset + 3, 4) = params.weight_torso *
-//             (guess_vars_.q_sol.segment(offset + 3, 4) - desired_vars_.q_sol.segment(offset + 3, 4));
-
-//         g_.segment(offset + 7, num_qj) = params.weight_general_qj *
-//             (guess_vars_.q_sol.segment(offset + 7, num_qj) - desired_vars_.q_sol.segment(offset + 7, num_qj));
-//     }
-//         // v terms
-//     for (int i = 0; i < N_; i++){
-//         int v_off = (N_+1)*num_q + i*num_v;
-//         int var_v_off = i*num_v;
-
-//         g_.segment(v_off, 3) = params.weight_general_vb *
-//             (guess_vars_.v_sol.segment(var_v_off, 3) - desired_vars_.v_sol.segment(var_v_off, 3));
-
-//         g_.segment(v_off + 3, 3) = params.weight_general_omega_b *
-//             (guess_vars_.v_sol.segment(var_v_off + 3, 3) - desired_vars_.v_sol.segment(var_v_off + 3, 3));
-
-//         g_.segment(v_off + 6, num_vj) = params.weight_general_v *
-//             (guess_vars_.v_sol.segment(var_v_off + 6, num_vj) - desired_vars_.v_sol.segment(var_v_off + 6, num_vj));
-//     }
-//         // forces
-//     for (int i = 0; i < 2*N_; i++) { // 2 contacts per step (each foot)
-//         int fl_off = (N_+1)*num_q_v + i*3;
-//         int fr_off = (N_+1)*num_q_v + N_*6 +i*3; // second foot offset
-
-//             // XY part
-//             g_.segment(fl_off, 2) = params.weight_contact_force_xy *
-//                 (guess_vars_.F_lsole_sol.segment(i*3, 2) - desired_vars_.F_lsole_sol.segment(i*3, 2));
-
-//             // Z part (scalar)
-//             g_(fl_off + 2) = params.weight_contact_force_z *
-//                 (guess_vars_.F_lsole_sol(i*3 + 2) - desired_vars_.F_lsole_sol(i*3 + 2));
-
-//             // Right foot
-//             g_.segment(fr_off, 2) = params.weight_contact_force_xy *
-//                 (guess_vars_.F_rsole_sol.segment(i*3, 2) - desired_vars_.F_rsole_sol.segment(i*3, 2));
-//             g_(fr_off + 2) = params.weight_contact_force_z *
-//                 (guess_vars_.F_rsole_sol(i*3 + 2) - desired_vars_.F_rsole_sol(i*3 + 2));
-//     }  
-    
-//   }
 
   void WholeBodyMPC::update_CoM_desired( int64_t t_msec, const labrob::WalkingData& walking_data, vars_WBNMPC &desired_vars){
 
@@ -965,11 +807,11 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     int64_t t_msec,
     // line search parameters
     double alpha_min   ,
-    double theta_max   ,
-    double theta_min   ,
-    double eta         ,
-    double gamma_phi   ,
-    double gamma_theta ,
+    // double theta_max   ,
+    // double theta_min   ,
+    // double eta         ,
+    // double gamma_phi   ,
+    // double gamma_theta ,
     double gamma_alpha 
     
 ) {
@@ -980,7 +822,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     static std::ofstream Cost_constr ("Cost_Constr");
 
     static std::ofstream Input("Input");
-    std::cout << "Desired q sol:\n" << desired_vars.q_sol.transpose() << std::endl;
+    //std::cout << "Desired q sol:\n" << desired_vars.q_sol.transpose() << std::endl;
     Cost_constr << "Time: " << t_msec << " ms ------------------\n";
     Input << "Time: " << t_msec << " ms ------------------\n";
     auto evaluate_candidate = [&](const vars_WBNMPC& candidate_vars) {
@@ -1047,7 +889,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
 
         //std::cout << "Dense constraint Dyn: " << dense_constraint.segment(N_ * robot_model.nq ,N_ * robot_model.nv ) << std::endl;
         // Minus the inequality constrains part
-        double theta_val = dense_constraint.squaredNorm()-dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * (robot_model.nq + robot_model.nv + 2 * 4 * 3 ), 2 * 4 * N_ ).squaredNorm();// 4 is the num_contact
+        double theta_val = dt*(dense_constraint.squaredNorm()-dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * (robot_model.nq + robot_model.nv + 2 * 4 * 3 ), 2 * 4 * N_ ).squaredNorm());// 4 is the num_contact
 
 
         return std::make_pair(phi_val, theta_val);
@@ -1090,6 +932,59 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     std::cout << "size of q guess: "<< guess_vars.q_sol.size() << std::endl;
     auto [phi_i, theta_i] = evaluate_candidate(guess_vars);
 
+    
+        
+        // Adaptive parameters based on history
+        double theta_max, theta_min, eta, gamma_phi, gamma_theta;
+        
+        // Check if constraints are consistently satisfied
+        bool constraints_satisfied = true;
+        for (double theta : constraint_history_) {
+            if (theta > 10) {
+                constraints_satisfied = false;
+                break;
+            }
+        }
+        
+        // Check if cost is improving
+        bool cost_improving = true;
+        if (cost_history_.size() >= 3) {
+            for (size_t i = 1; i < cost_history_.size(); i++) {
+                if (cost_history_[i] > cost_history_[i-1] * 1.1) {
+                    cost_improving = false;
+                    break;
+                }
+            }
+        }
+        
+        if (constraints_satisfied && cost_improving) {
+            // COST PRIORITY MODE
+            std::cout << "MODE: Cost Priority" << std::endl;
+            theta_max = 1e1;     // Very tolerant of violations
+            theta_min = 1e-4;    // Switch to cost mode easily
+            eta = 1e-6;          // Accept small cost reductions
+            gamma_phi = 1e-8;    // Very permissive on cost
+            gamma_theta = 0.99;  // Need big constraint reduction to override cost
+        }
+        else if (!constraints_satisfied) {
+            // CONSTRAINT PRIORITY MODE
+            std::cout << "MODE: Constraint Priority" << std::endl;
+            theta_max = 1e-2;
+            theta_min = 1e-6;
+            eta = 1e-2;
+            gamma_phi = 1e-4;
+            gamma_theta = 0.5;   // Accept moderate constraint reductions
+        }
+        else {
+            // BALANCED MODE
+            std::cout << "MODE: Balanced" << std::endl;
+            theta_max = 1e-1;
+            theta_min = 1e-5;
+            eta = 1e-4;
+            gamma_phi = 1e-6;
+            gamma_theta = 0.9;
+        }
+
     //std::cout << "Current cost: " << phi_i << ", current constrain: " << theta_i << std::endl;
     
     Cost_constr <<"Current cost:" << phi_i << ", current constrain: " << theta_i << std::endl;
@@ -1109,6 +1004,14 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     int len_q = guess_vars.q_sol.size() - robot_model.nq;
     
     int len_v = guess_vars.v_sol.size() - robot_model.nv;
+    // for (int i = 0; i< N_; i++){
+    //   std::cout << "SQP solution for q, step " << i+1 << ": \n" << delta_w.segment(i*robot_model.nq, robot_model.nq).transpose() << std::endl;
+    // }
+
+    for (int i = 0; i< N_; i++){
+      std::cout << "SQP solution for v, step " << i+1 << ": \n" << delta_w.segment(len_q+i*robot_model.nv, robot_model.nv).transpose() << std::endl;
+    }
+    //std::cout << "SQP solution for q: \n" << delta_w.head(len_q).transpose() << std::endl;
     //Update candidate vars, but not q0 and v0
     while (!accepted && alpha >= alpha_min) {
         candidate_vars.q_sol.segment(robot_model.nq, len_q) = 
@@ -1133,7 +1036,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
             }
         }
         else if (std::max(theta_next, theta_i) < theta_min && descent_dir < 0) {
-            if (phi_next < phi_i + eta * descent_dir) {
+            if (phi_next < phi_i + eta * alpha*descent_dir) {
                 accepted = true;
                 //w_next = candidate;
             }
@@ -1151,9 +1054,9 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     Cost_constr << "---------------------------------------------------------\n";
 
     
-    std::cout << "Torque guess: \n" << guess_vars.tau_sol.head(n_joints_).transpose() << std::endl;
+    //std::cout << "Torque guess: \n" << guess_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     //std::cout << "Delta torque: \n" << delta_w.segment(guess_vars.q_sol.size() + guess_vars.v_sol.size() + guess_vars.F_lsole_sol.size() + guess_vars.F_rsole_sol.size(), guess_vars.tau_sol.size()).head(n_joints_).transpose() << std::endl;
-    std::cout << "Torque candidate: \n" << candidate_vars.tau_sol.head(n_joints_).transpose() << std::endl;
+    //std::cout << "Torque candidate: \n" << candidate_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     
     Input << "Torque guess: \n" << guess_vars.tau_sol.head(n_joints_).transpose() << std::endl;
     Input << "Torque candidate: \n" << candidate_vars.tau_sol.head(n_joints_).transpose() << std::endl;
@@ -1165,7 +1068,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
    
     
     
-    // std::cout << "Guess var q: "<< guess_vars.q_sol.transpose()<< std::endl;
+    //std::cout << "Guess var q: "<< guess_vars.q_sol.transpose()<< std::endl;
     // std::cout << "Guess var v: "<< guess_vars.v_sol.transpose()<< std::endl;
     // std::cout << "Guess var F_l: "<< guess_vars.F_lsole_sol.transpose()<< std::endl;
     // std::cout << "Guess var F_r: "<< guess_vars.F_rsole_sol.transpose()<< std::endl;
@@ -1184,8 +1087,14 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
     Input << "Candidate var F_r: \n" << candidate_vars.F_rsole_sol.transpose()<< std::endl;
     Input << "--------------------------------------------- \n";
     // std::cout << "Candidate var tau: "<< candidate_vars.tau_sol.transpose() << std::endl;
-
-
+    auto [phi_next, theta_next] = evaluate_candidate(candidate_vars);
+    // Update history
+        cost_history_.push_back(phi_next);
+        constraint_history_.push_back(theta_next);
+        if (cost_history_.size() > 10) {
+            cost_history_.pop_front();
+            constraint_history_.pop_front();
+        }
 
 
     

@@ -532,6 +532,9 @@ void launch_plot_script() {
     
     // std::system executes the command in a subshell
     int result = std::system(command);
+
+    const char* command1 = "python3 plot_vel.py &";
+    int result1 = std::system(command1);
     
     if (result != 0) {
         std::cerr << "Error: Failed to execute plot script. Check if 'python3' is in PATH or if the file exists.\n";
