@@ -162,6 +162,46 @@ int main() {
   mjtNum* qpos0 = (mjtNum*) malloc(sizeof(mjtNum) * mj_model_ptr->nq);// dynamically asign memory for initial qpos
   memcpy(qpos0, mj_data_ptr->qpos, mj_model_ptr->nq * sizeof(mjtNum));// copy initial qpos defined above to qpos0
 
+  std::vector<std::string> mujoco_locked_joints{
+    "left_wrist_pitch_joint",
+    "left_wrist_roll_joint",
+    "left_wrist_yaw_joint",
+    "right_wrist_pitch_joint",
+    "right_wrist_roll_joint",
+    "right_wrist_yaw_joint"
+};
+
+for (const auto& joint_name : mujoco_locked_joints) {
+    int joint_id = mj_name2id(mj_model_ptr, mjOBJ_JOINT, joint_name.c_str());
+    
+    if (joint_id >= 0) {
+        // Get the DOF address for this joint
+        int dof_id = mj_model_ptr->jnt_dofadr[joint_id];
+        
+        // Store the initial position
+        double locked_position = mj_data_ptr->qpos[mj_model_ptr->jnt_qposadr[joint_id]];
+        
+        // Set very high stiffness and damping to keep it fixed
+        mj_model_ptr->dof_armature[dof_id] = 1000.0;  // High inertia
+        
+        // Option 1: Use position servo to hold position
+        // Set the joint as a position-controlled actuator with very high gain
+        
+        // Option 2: Set joint limits to lock it
+        int qpos_idx = mj_model_ptr->jnt_qposadr[joint_id];
+        mj_model_ptr->jnt_range[joint_id * 2] = locked_position;      // lower limit
+        mj_model_ptr->jnt_range[joint_id * 2 + 1] = locked_position;  // upper limit
+        
+        // Option 3: Zero out control and velocity
+        mj_data_ptr->qvel[dof_id] = 0.0;
+        
+        std::cout << "Locked joint '" << joint_name 
+                  << "' in Mujoco at position: " << locked_position << std::endl;
+    } else {
+        std::cerr << "Warning: Joint '" << joint_name << "' not found in Mujoco model" << std::endl;
+    }
+}
+
   // Create an array mapping joint names to their amateur value, 
   //amateur is a parameter that defines the resistance of the joint to motion, 
   //it is used in Mujoco to simulate the inertia of the joint.

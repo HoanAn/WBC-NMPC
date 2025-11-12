@@ -314,6 +314,45 @@ int main() {
   mjtNum* qpos0 = (mjtNum*) malloc(sizeof(mjtNum) * mj_model_ptr->nq);// dynamically asign memory for initial qpos
   memcpy(qpos0, mj_data_ptr->qpos, mj_model_ptr->nq * sizeof(mjtNum));// copy initial qpos defined above to qpos0
 
+  std::vector<std::string> mujoco_locked_joints{
+    "left_wrist_pitch_joint",
+    "left_wrist_roll_joint",
+    "left_wrist_yaw_joint",
+    "right_wrist_pitch_joint",
+    "right_wrist_roll_joint",
+    "right_wrist_yaw_joint"
+};
+
+for (const auto& joint_name : mujoco_locked_joints) {
+    int joint_id = mj_name2id(mj_model_ptr, mjOBJ_JOINT, joint_name.c_str());
+    
+    if (joint_id >= 0) {
+        // Get the DOF address for this joint
+        int dof_id = mj_model_ptr->jnt_dofadr[joint_id];
+        
+        // Store the initial position
+        double locked_position = mj_data_ptr->qpos[mj_model_ptr->jnt_qposadr[joint_id]];
+        
+        // Set very high stiffness and damping to keep it fixed
+        mj_model_ptr->dof_armature[dof_id] = 1000.0;  // High inertia
+        
+        // Option 1: Use position servo to hold position
+        // Set the joint as a position-controlled actuator with very high gain
+        
+        // Option 2: Set joint limits to lock it
+        int qpos_idx = mj_model_ptr->jnt_qposadr[joint_id];
+        mj_model_ptr->jnt_range[joint_id * 2] = locked_position;      // lower limit
+        mj_model_ptr->jnt_range[joint_id * 2 + 1] = locked_position;  // upper limit
+        
+        // Option 3: Zero out control and velocity
+        mj_data_ptr->qvel[dof_id] = 0.0;
+        
+        std::cout << "Locked joint '" << joint_name 
+                  << "' in Mujoco at position: " << locked_position << std::endl;
+    } else {
+        std::cerr << "Warning: Joint '" << joint_name << "' not found in Mujoco model" << std::endl;
+    }
+}
   // Create an array mapping joint names to their amateur value, 
   //amateur is a parameter that defines the resistance of the joint to motion, 
   //it is used in Mujoco to simulate the inertia of the joint.
@@ -344,17 +383,17 @@ int main() {
   );
   // Define the locked joints in the constant string "joints_to_lock_names" 
   //for the pinocchio robot model to build a reduced model.
-  // const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
-  //                                                    "left_wrist_roll_joint",
-  //                                                    "left_wrist_yaw_joint",
-  //                                                    "right_wrist_pitch_joint",
-  //                                                    "right_wrist_roll_joint",
-  //                                                    "right_wrist_yaw_joint",
+  const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
+                                                     "left_wrist_roll_joint",
+                                                     "left_wrist_yaw_joint",
+                                                     "right_wrist_pitch_joint",
+                                                     "right_wrist_roll_joint",
+                                                     "right_wrist_yaw_joint"};
   //                                                    "left_hip_yaw_joint",
   //                                                     "right_hip_yaw_joint"
   //                                                    };//"left_hip_yaw_joint",
 
-  const std::vector<std::string> joint_to_lock_names{};//"left_hip_yaw_joint",                                                   
+  //const std::vector<std::string> joint_to_lock_names{};//"left_hip_yaw_joint",                                                   
   std::vector<pinocchio::JointIndex> joint_ids_to_lock;
   for (const auto& joint_name : joint_to_lock_names) {
     if (full_robot_model.existJointName(joint_name)) {
@@ -392,7 +431,7 @@ int main() {
 
   std::cout << "Setting up casadi components" << std::endl;
 
-  int N = 15; // predicted horizion
+  int N = 20; // predicted horizion
   double d_dt = 0.001; // dynamic sample time
   double d_mu = 0.5; // friction coefficient
 
@@ -408,8 +447,8 @@ int main() {
   int num_torques = num_torques_single_step*(N); // joint torques
 
 
-  int num_q_single_step = robot_model_test.nq; // = 28
-  int num_v_single_step = robot_model_test.nv; // = 27
+  int num_q_single_step = robot_model_test.nq; // = 23
+  int num_v_single_step = robot_model_test.nv; // = 22
   
   int num_force_single_foot_single_step = num_contact * 3; // 3 forces (Fx, Fy, Fz) per contact
   //int num_force = num_force_single_foot_single_step * N; // concatenated forces for N steps
@@ -691,7 +730,7 @@ int main() {
     // B_qk(3, 0) = -y; B_qk(3, 1) =  x; B_qk(3, 2) =  w;
 
     f_kin_i(Slice(3, 7)) = u_quarternion_k1 - u_quarternion_k - 0.5* 0.5 * (mtimes (B_qk,omega_k) + mtimes (B_qk1,omega_k1))*dt; // Quaternion constraint
-    std::cout << "f_kin_i \n: " << f_kin_i << std::endl;
+    //std::cout << "f_kin_i \n: " << f_kin_i << std::endl;
   // f_constraint kinematic
     f_kin(Slice(k*num_q_single_step, (k + 1)*num_q_single_step)) = f_kin_i; // Store the constraint for this step
 
@@ -732,9 +771,12 @@ int main() {
     // CasadiMotion v_lsole_world = data_casadi.oMi[(size_t)lsole_idx].act(v_lsole_local);
     // CasadiMotion v_rsole_world = data_casadi.oMi[(size_t)rsole_idx].act(v_rsole_local);
 
-    CasadiMotion v_lsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, lsole_idx, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED);
-    CasadiMotion v_rsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, rsole_idx, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED);
+    CasadiMotion v_lsole_local_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, lsole_idx, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED);
+    CasadiMotion v_rsole_local_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, rsole_idx, pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED);
 
+
+    CasadiMotion v_lsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, lsole_idx, pinocchio::ReferenceFrame::WORLD);
+    CasadiMotion v_rsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, rsole_idx, pinocchio::ReferenceFrame::WORLD);
     pinocchio::getFrameJacobian(
       model_casadi,
       data_casadi,
@@ -765,8 +807,8 @@ int main() {
 
     for (Eigen::DenseIndex i = 0; i <  6; ++i)
     {
-      cs_v_lsole(i) = v_lsole_world.toVector()[i];
-      cs_v_rsole(i) = v_rsole_world.toVector()[i];
+      cs_v_lsole(i) = v_lsole_local_world.toVector()[i];
+      cs_v_rsole(i) = v_rsole_local_world.toVector()[i];
       std::cout << "cs_v_lsole(" << i << ") = " << cs_v_lsole(i) << std::endl;
     }
 
@@ -1069,10 +1111,11 @@ int main() {
   
   Dict codegen_options;
   codegen_options["with_header"] = true;
+  codegen_options["cpp"] = false;
   //codegen_options["cse"] = true;
   // eval_Jacob_cost.generate("eval_Jacob_code.cpp", codegen_options);
 
-  CodeGenerator Codegen("eval_codegen_func.cpp", codegen_options);
+  CodeGenerator Codegen("eval_codegen_func.c", codegen_options);
   std::cout << "Generating code for the functions" << std::endl;
   Codegen.add(eval_cost);
   Codegen.add(eval_Jacob_cost);
@@ -1208,7 +1251,7 @@ labrob::pressAnyKey();
       labrob::qpsolvers::CSCMatrix_params res_out;
       std::cout << "Codegen fconstraint" << std::endl;
 
-      eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,res_out );
+      //eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,res_out );
       std::cout << "f_fconstraint_eval: " << std::endl;
 
       // for (int i = 0; i < num_constraint; ++i) {

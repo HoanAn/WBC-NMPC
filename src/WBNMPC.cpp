@@ -31,12 +31,12 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
 
   /// Weight needed
   params.weight_com_xy = 10; // First 2 components of vector q
-  params.weight_com_z = 100; // 
-  params.weight_torso = 1000; // The next fourth quaternion component of vector q
+  params.weight_com_z = 10; // 
+  params.weight_torso = 5; // The next fourth quaternion component of vector q
   params.weight_general_qj = 1; // The rest of joint position
 
-  params.weight_general_vb = 0.1; // The first three components of vector v (linear velocity of the base)
-  params.weight_general_omega_b = 0.1; // The next three components of vector v (angular velocity of the base)
+  params.weight_general_vb = 0.02; // The first three components of vector v (linear velocity of the base)
+  params.weight_general_omega_b = 0.02; // The next three components of vector v (angular velocity of the base)
   params.weight_general_v = 0.01; // The rest of joint velocity
 
   params.weight_contact_force_xy = 0.1; // Contact forces in x and y direction
@@ -356,11 +356,11 @@ void WholeBodyMPC::update_guess(const pinocchio::Model& robot_model,
     //Shifted the previous solution to the left
     // guess_vars_.q_sol.segment(robot_model.nq, (N_-1)*robot_model.nq) = solution_vars_.q_sol.segment(2*robot_model.nq, (N_-1)*robot_model.nq);
     // guess_vars_.q_sol.tail(robot_model.nq) = solution_vars_.q_sol.tail(robot_model.nq);
-    // for (int i=0; i<N_+1; i++){
-    //     // Normalize the quaternion part
-    //     guess_vars_.q_sol.segment(i*robot_model.nq +3,4) /= guess_vars_.q_sol.segment(i*robot_model.nq +3,4).norm();
+    for (int i=0; i<N_+1; i++){
+        // Normalize the quaternion part
+        guess_vars_.q_sol.segment(i*robot_model.nq +3,4) /= guess_vars_.q_sol.segment(i*robot_model.nq +3,4).norm();
         
-    // }
+    }
     // guess_vars_.v_sol.segment(robot_model.nv, (N_-1)*robot_model.nv) = solution_vars_.v_sol.segment(2*robot_model.nv, (N_-1)*robot_model.nv);
     // guess_vars_.v_sol.tail(robot_model.nv) = solution_vars_.v_sol.tail(robot_model.nv);
 
@@ -447,7 +447,7 @@ WholeBodyMPC::compute_inverse_dynamics(
 ) {
 
   auto start_time = std::chrono::high_resolution_clock::now();
-  double dt = 0.02;
+  double dt = 0.005;
 
    auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
    //std::cout << "Current q: " << q.transpose() << std::endl;
@@ -889,7 +889,7 @@ vars_WBNMPC WholeBodyMPC::backtracking_line_search(
 
         //std::cout << "Dense constraint Dyn: " << dense_constraint.segment(N_ * robot_model.nq ,N_ * robot_model.nv ) << std::endl;
         // Minus the inequality constrains part
-        double theta_val = dt*(dense_constraint.squaredNorm()-dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * (robot_model.nq + robot_model.nv + 2 * 4 * 3 ), 2 * 4 * N_ ).squaredNorm());// 4 is the num_contact
+        double theta_val = (dense_constraint.squaredNorm()-dense_constraint.segment(robot_model.nq*0 + robot_model.nv*0 +N_ * (robot_model.nq + robot_model.nv + 2 * 4 * 3 ), 2 * 4 * N_ ).squaredNorm());// 4 is the num_contact
 
 
         return std::make_pair(phi_val, theta_val);

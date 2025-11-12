@@ -64,15 +64,15 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
   std::cout << "Root joint name: " << root_joint.id() << std::endl;
   // Define the locked joints in the constant string "joints_to_lock_names" 
   //for the pinocchio robot model to build a reduced model.
-//   const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
-//                                                      "left_wrist_roll_joint",
-//                                                      "left_wrist_yaw_joint",
-//                                                      "right_wrist_pitch_joint",
-//                                                      "right_wrist_roll_joint",
-//                                                      "right_wrist_yaw_joint",
+  const std::vector<std::string> joint_to_lock_names{"left_wrist_pitch_joint",
+                                                     "left_wrist_roll_joint",
+                                                     "left_wrist_yaw_joint",
+                                                     "right_wrist_pitch_joint",
+                                                     "right_wrist_roll_joint",
+                                                     "right_wrist_yaw_joint"};
 //                                                      "left_hip_yaw_joint",
 //                                                       "right_hip_yaw_joint"};
-  const std::vector<std::string> joint_to_lock_names{};
+  //const std::vector<std::string> joint_to_lock_names{};
   std::vector<pinocchio::JointIndex> joint_ids_to_lock;
   for (const auto& joint_name : joint_to_lock_names) {
     if (full_robot_model.existJointName(joint_name)) {
@@ -303,7 +303,7 @@ WalkingManager::init(const labrob::RobotState& initial_robot_state,
       robot_model_,
       q_init,
       0.001 * controller_timestep_msec_,
-      15,
+      20,
       armatures
   );
 

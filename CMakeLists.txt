@@ -18,6 +18,17 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
   endif()
 endif()
 
+
+# set(CODEGEN_SRC "eval_codegen_func.c")
+
+# # Compile it with minimal optimization
+# # set_source_files_properties(${CODEGEN_SRC} PROPERTIES 
+# #     COMPILE_FLAGS "-O0 -g0"  # No optimization, no debug symbols
+# # )
+
+# # Or even better, compile as C instead of C++
+# set_source_files_properties(${CODEGEN_SRC} PROPERTIES LANGUAGE C)
+
 # Manually set INCLUDE_DIRS and LIBRARIES since not handled in blasfeo and hpipm
 set(blasfeo_INCLUDE_DIRS /opt/blasfeo/include)
 set(hpipm_INCLUDE_DIRS /opt/hpipm/include)
@@ -44,7 +55,7 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WalkingState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WholeBodyController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/WBNMPC.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/eval_codegen_func.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/eval_codegen_func.c
 )
 
 target_include_directories(WalkingControllerLibrary
