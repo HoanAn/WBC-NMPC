@@ -41,3 +41,7 @@
 *.dwo
 # Build folder
 build-*/
+
+# text file
+*.txt
+*.csv
