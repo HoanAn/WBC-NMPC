@@ -624,3 +624,408 @@ events:
         201703
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_73c35/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_73c35.dir/build.make CMakeFiles/cmTC_73c35.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_73c35.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_73c35.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_73c35
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_73c35.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_73c35.dir/tmp-cxx-standard.cpp.o" -o cmTC_73c35 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_eefe0/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_eefe0.dir/build.make CMakeFiles/cmTC_eefe0.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_eefe0.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_eefe0.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_eefe0
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_eefe0.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_eefe0.dir/tmp-cxx-standard.cpp.o" -o cmTC_eefe0 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_11a63/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_11a63.dir/build.make CMakeFiles/cmTC_11a63.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_11a63.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_11a63.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_11a63
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_11a63.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_11a63.dir/tmp-cxx-standard.cpp.o" -o cmTC_11a63 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_79dad/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_79dad.dir/build.make CMakeFiles/cmTC_79dad.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_79dad.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_79dad.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_79dad
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_79dad.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_79dad.dir/tmp-cxx-standard.cpp.o" -o cmTC_79dad 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_c4f55/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_c4f55.dir/build.make CMakeFiles/cmTC_c4f55.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_c4f55.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_c4f55.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_c4f55
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c4f55.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_c4f55.dir/tmp-cxx-standard.cpp.o" -o cmTC_c4f55 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_e8f5c/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_e8f5c.dir/build.make CMakeFiles/cmTC_e8f5c.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_e8f5c.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_e8f5c.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_e8f5c
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e8f5c.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_e8f5c.dir/tmp-cxx-standard.cpp.o" -o cmTC_e8f5c 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3fcd9/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_3fcd9.dir/build.make CMakeFiles/cmTC_3fcd9.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_3fcd9.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_3fcd9.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_3fcd9
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3fcd9.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_3fcd9.dir/tmp-cxx-standard.cpp.o" -o cmTC_3fcd9 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_23dda/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_23dda.dir/build.make CMakeFiles/cmTC_23dda.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_23dda.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_23dda.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_23dda
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_23dda.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_23dda.dir/tmp-cxx-standard.cpp.o" -o cmTC_23dda 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "/opt/openrobots/lib/cmake/coal/cxx-standard.cmake:62 (try_run)"
+      - "/opt/openrobots/lib/cmake/coal/coalConfig.cmake:190 (CHECK_MINIMAL_CXX_STANDARD)"
+      - "/opt/openrobots/lib/cmake/hpp-fcl/hpp-fclConfig.cmake:5 (find_package)"
+      - "/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/opt/openrobots/lib/cmake/pinocchio/pinocchioConfig.cmake:161 (find_dependency)"
+      - "CMakeLists.txt:7 (find_package)"
+    directories:
+      source: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+      binary: "/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "_cxx_standard_build_status"
+      cached: true
+      stdout: |
+        Change Dir: '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_93cef/fast
+        gmake[1]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_93cef.dir/build.make CMakeFiles/cmTC_93cef.dir/build
+        gmake[2]: Entering directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_93cef.dir/tmp-cxx-standard.cpp.o
+        /usr/bin/c++   -std=gnu++17 -o CMakeFiles/cmTC_93cef.dir/tmp-cxx-standard.cpp.o -c /home/rum/Sapienza/Excelent/mpc/build/cmake/tmp-cxx-standard.cpp
+        Linking CXX executable cmTC_93cef
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_93cef.dir/link.txt --verbose=1
+        /usr/bin/c++ "CMakeFiles/cmTC_93cef.dir/tmp-cxx-standard.cpp.o" -o cmTC_93cef 
+        gmake[2]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        gmake[1]: Leaving directory '/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+    runResult:
+      variable: "_cxx_standard_run_status"
+      cached: true
+      stdout: |
+        201703
+      exitCode: 0
+...

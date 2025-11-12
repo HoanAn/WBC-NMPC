@@ -307,19 +307,19 @@ CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/rum/Sapienza/Excelent/mpc/src/WBNMPC.cpp -o CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.s
 
-CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o: CMakeFiles/WalkingControllerLibrary.dir/flags.make
-CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o: /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp
-CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o: CMakeFiles/WalkingControllerLibrary.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o -MF CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o.d -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp
+CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o: CMakeFiles/WalkingControllerLibrary.dir/flags.make
+CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o: /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c
+CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o: CMakeFiles/WalkingControllerLibrary.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o -MF CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o.d -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o -c /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c
 
-CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp > CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.i
+CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c > CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.i
 
-CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.s
+CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.s
 
 # Object files for target WalkingControllerLibrary
 WalkingControllerLibrary_OBJECTS = \
@@ -340,7 +340,7 @@ WalkingControllerLibrary_OBJECTS = \
 "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o" \
 "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o" \
 "CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o" \
-"CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o"
+"CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o"
 
 # External object files for target WalkingControllerLibrary
 WalkingControllerLibrary_EXTERNAL_OBJECTS =
@@ -362,7 +362,7 @@ libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/Walki
 libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o
 libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o
 libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/WBNMPC.cpp.o
-libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o
+libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o
 libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/build.make
 libWalkingControllerLibrary.a: CMakeFiles/WalkingControllerLibrary.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/rum/Sapienza/Excelent/mpc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Linking CXX static library libWalkingControllerLibrary.a"

@@ -600,29 +600,29 @@ src/WholeBodyController.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.s
 .PHONY : src/WholeBodyController.cpp.s
 
-src/eval_codegen_func.o: src/eval_codegen_func.cpp.o
+src/eval_codegen_func.o: src/eval_codegen_func.c.o
 .PHONY : src/eval_codegen_func.o
 
 # target to build an object file
-src/eval_codegen_func.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o
-.PHONY : src/eval_codegen_func.cpp.o
+src/eval_codegen_func.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o
+.PHONY : src/eval_codegen_func.c.o
 
-src/eval_codegen_func.i: src/eval_codegen_func.cpp.i
+src/eval_codegen_func.i: src/eval_codegen_func.c.i
 .PHONY : src/eval_codegen_func.i
 
 # target to preprocess a source file
-src/eval_codegen_func.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.i
-.PHONY : src/eval_codegen_func.cpp.i
+src/eval_codegen_func.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.i
+.PHONY : src/eval_codegen_func.c.i
 
-src/eval_codegen_func.s: src/eval_codegen_func.cpp.s
+src/eval_codegen_func.s: src/eval_codegen_func.c.s
 .PHONY : src/eval_codegen_func.s
 
 # target to generate assembly for a file
-src/eval_codegen_func.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.s
-.PHONY : src/eval_codegen_func.cpp.s
+src/eval_codegen_func.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/WalkingControllerLibrary.dir/build.make CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.s
+.PHONY : src/eval_codegen_func.c.s
 
 src/utils.o: src/utils.cpp.o
 .PHONY : src/utils.o

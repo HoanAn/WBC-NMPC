@@ -100,7 +100,7 @@ int f_total_constraint_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi
 #define f_total_constraint_SZ_ARG 8
 #define f_total_constraint_SZ_RES 1
 #define f_total_constraint_SZ_IW 0
-#define f_total_constraint_SZ_W 2373
+#define f_total_constraint_SZ_W 3320
 int Jacob_f_total_constraint(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem);
 int Jacob_f_total_constraint_alloc_mem(void);
 int Jacob_f_total_constraint_init_mem(int mem);
@@ -121,7 +121,7 @@ int Jacob_f_total_constraint_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, 
 #define Jacob_f_total_constraint_SZ_ARG 8
 #define Jacob_f_total_constraint_SZ_RES 1
 #define Jacob_f_total_constraint_SZ_IW 0
-#define Jacob_f_total_constraint_SZ_W 15756
+#define Jacob_f_total_constraint_SZ_W 18432
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
