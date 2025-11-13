@@ -7,7 +7,7 @@ import os
 # --- Configuration ---
 LOG_FILE_PATH = "log_state_vel.csv"
 NQ_JOINTS = 3       # Number of elements in a group (i.e., number of subplots)
-NUM_DATA_GROUPS = 21 # Total number of data groups 
+NUM_DATA_GROUPS = 26 # Total number of data groups 
 HISTORY_POINTS = 2000 # How many past points to show on the persistent plots
 TIME_SHIFT_STEP = 10.0 # The amount of time to shift each consecutive predicted group by (e.g., 10)
 # ---
