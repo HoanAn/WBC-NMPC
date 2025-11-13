@@ -447,7 +447,7 @@ WholeBodyMPC::compute_inverse_dynamics(
 ) {
 
   auto start_time = std::chrono::high_resolution_clock::now();
-  double dt = 0.02;
+  double dt = 0.05;
 
    auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
    //std::cout << "Current q: " << q.transpose() << std::endl;

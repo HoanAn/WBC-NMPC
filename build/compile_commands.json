@@ -103,9 +103,9 @@
 },
 {
   "directory": "/home/rum/Sapienza/Excelent/mpc/build",
-  "command": "/usr/bin/c++ -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DOSQP_SHARED_LIB -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -I/opt/hpipm/include -I/opt/blasfeo/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -isystem /usr/local/include/osqp -O3 -DNDEBUG -std=gnu++17 -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o -c /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp",
-  "file": "/home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.cpp",
-  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o"
+  "command": "/usr/bin/cc -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30 -DCOAL_BACKWARD_COMPATIBILITY_WITH_HPP_FCL -DCOAL_HAS_OCTOMAP -DCOAL_HAVE_OCTOMAP -DOCTOMAP_MAJOR_VERSION=1 -DOCTOMAP_MINOR_VERSION=9 -DOCTOMAP_PATCH_VERSION=7 -DOSQP_SHARED_LIB -DPINOCCHIO_ENABLE_TEMPLATE_INSTANTIATION -DPINOCCHIO_WITH_HPP_FCL -DPINOCCHIO_WITH_URDFDOM -I/home/rum/Sapienza/Excelent/mpc/include -isystem /opt/openrobots/include -isystem /usr/include/eigen3 -isystem /usr/include/urdfdom -isystem /usr/include/jsoncpp -isystem /usr/local/include/osqp -O3 -DNDEBUG -o CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o -c /home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c",
+  "file": "/home/rum/Sapienza/Excelent/mpc/src/eval_codegen_func.c",
+  "output": "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o"
 },
 {
   "directory": "/home/rum/Sapienza/Excelent/mpc/build",

@@ -1069,10 +1069,11 @@ int main() {
   
   Dict codegen_options;
   codegen_options["with_header"] = true;
+  codegen_options["cpp"] = false;
   //codegen_options["cse"] = true;
   // eval_Jacob_cost.generate("eval_Jacob_code.cpp", codegen_options);
 
-  CodeGenerator Codegen("eval_codegen_func.cpp", codegen_options);
+  CodeGenerator Codegen("eval_codegen_func.c", codegen_options);
   std::cout << "Generating code for the functions" << std::endl;
   Codegen.add(eval_cost);
   Codegen.add(eval_Jacob_cost);
@@ -1208,7 +1209,7 @@ labrob::pressAnyKey();
       labrob::qpsolvers::CSCMatrix_params res_out;
       std::cout << "Codegen fconstraint" << std::endl;
 
-      eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,res_out );
+      //eval_codegen(f_total_constraint_work, f_total_constraint, f_total_constraint_sparsity_out, data_meas,res_out );
       std::cout << "f_fconstraint_eval: " << std::endl;
 
       // for (int i = 0; i < num_constraint; ++i) {

@@ -31,8 +31,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/WalkingControllerLibrary.dir/src/WalkingState.cpp.o.d"
   "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o"
   "CMakeFiles/WalkingControllerLibrary.dir/src/WholeBodyController.cpp.o.d"
-  "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o"
-  "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.cpp.o.d"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o"
+  "CMakeFiles/WalkingControllerLibrary.dir/src/eval_codegen_func.c.o.d"
   "CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o"
   "CMakeFiles/WalkingControllerLibrary.dir/src/utils.cpp.o.d"
   "libWalkingControllerLibrary.a"
@@ -40,6 +40,6 @@ file(REMOVE_RECURSE
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang CXX)
+foreach(lang C CXX)
   include(CMakeFiles/WalkingControllerLibrary.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()
