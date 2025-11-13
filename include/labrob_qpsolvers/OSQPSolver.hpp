@@ -36,7 +36,7 @@ class OSQPSolver : public QPSolver<double> {
     qp_setting_->eps_rel = 1e-3;  // Default is 1e-3
     qp_setting_->eps_prim_inf = 1e-3;  // Primal infeasibility tolerance
     qp_setting_->eps_dual_inf = 1e-3;  // Dual infeasibility tolerance
-    //qp_setting_->adaptive_rho = false;
+    qp_setting_->adaptive_rho = false;
 
     //P_ = OSQPCscMatrix_identity(numVariables); // Initialize an identity matrix for P
     P_ = OSQPCscMatrix_new(P_params.nrows, P_params.ncols, P_params.nzeros,

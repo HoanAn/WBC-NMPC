@@ -427,13 +427,13 @@ for (const auto& joint_name : mujoco_locked_joints) {
   std::cout << "Joint velocity measured from mujoco: " << std::endl;
   std::cout << v_meas.transpose() << std::endl;
 
-// --------------------Preparing casadi components---------------------
+// --------------------Preparing casadi components------------------------------
 
   std::cout << "Setting up casadi components" << std::endl;
 
-  int N = 20; // predicted horizion
-  double d_dt = 0.001; // dynamic sample time
-  double d_mu = 0.5; // friction coefficient
+  int N = 25; // predicted horizion
+  double d_dt = 0.001; // dynamic sample time - numerical value for testing
+  double d_mu = 0.5; // friction coefficient - numerical value for testing
 
   double d_dt_arr[] = {d_dt};
   double d_mu_arr[] = {d_mu};
@@ -469,7 +469,7 @@ for (const auto& joint_name : mujoco_locked_joints) {
   Ca_TangentVector cs_v_k(num_v_single_step);
 
   SX ca_pos_v(robot_model_test.nv*N,1);
-  ca_pos_v = ca_v( Slice(num_v_single_step, num_v_single_step * (N+1)) ); 
+  ca_pos_v = ca_v( Slice(num_v_single_step, num_v_single_step * (N+1)) ); // excluding the first component
   SX ca_v_r = SX::sym("v_r", num_v); // reference joint velocity
 
   std::cout << "ca_pos_v size: " << ca_pos_v.size() << std::endl;
@@ -490,7 +490,7 @@ for (const auto& joint_name : mujoco_locked_joints) {
   SX tau = SX::sym("tau", num_torques); // joint torques
 
   //----------------------THINK ABOUT IT-------------------------------------------------------------------------
-  SX decision_vars = vertcat(SXVector{ca_pos_q, ca_pos_v, F_lsole, F_rsole, tau});// optimazation decision variables
+  SX decision_vars = vertcat(SXVector{ca_pos_q, ca_pos_v, F_lsole, F_rsole, tau});// optimization decision variables
   //-------------------------------------------------------------------------------------------------------------
   //int num_gamma = num_contact * 2 *
   //Gamma are variables that captures the contact status
@@ -575,7 +575,8 @@ for (const auto& joint_name : mujoco_locked_joints) {
   SX f_tang_contact_vel ( num_contact*2*2*N,1 );// x, y directions
 
   //
-  int num_constraint = 0*num_q_single_step + 0*num_v_single_step + N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*2 + num_contact*2*2);
+  int num_constraint =  N* (num_q_single_step + num_v_single_step + num_force_single_foot_single_step*2 + 2*num_contact + 2*2 + num_contact*2*2);
+  // f_kin + f_dyn + f_swing + f_friction + f_contact_height (2*(heel+toe)) + f_tang_contact_vel
   //um_constraint = N* (num_q_single_step  + num_force_single_foot_single_step*2+ 2*num_contact + 2*num_contact+4*num_contact);
   
   std::cout << "Total number of constraints: " << num_constraint << std::endl;
@@ -764,9 +765,7 @@ for (const auto& joint_name : mujoco_locked_joints) {
     updateFramePlacements(model_casadi, data_casadi);
 
     std::cout << "Done forward kinematics" << std::endl;
-    CasadiMotion & v_lsole_local = data_casadi.v[(size_t)lsole_idx];
-    CasadiMotion & v_rsole_local = data_casadi.v[(size_t)rsole_idx];
-    std::cout << "Done extracting foot vel local" << std::endl;
+
 
     // CasadiMotion v_lsole_world = data_casadi.oMi[(size_t)lsole_idx].act(v_lsole_local);
     // CasadiMotion v_rsole_world = data_casadi.oMi[(size_t)rsole_idx].act(v_rsole_local);
@@ -777,31 +776,10 @@ for (const auto& joint_name : mujoco_locked_joints) {
 
     CasadiMotion v_lsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, lsole_idx, pinocchio::ReferenceFrame::WORLD);
     CasadiMotion v_rsole_world = pinocchio::getFrameVelocity(model_casadi, data_casadi, rsole_idx, pinocchio::ReferenceFrame::WORLD);
-    pinocchio::getFrameJacobian(
-      model_casadi,
-      data_casadi,
-      lsole_idx,
-      pinocchio::ReferenceFrame::WORLD,
-      J_lsole_ca
-    );
-    pinocchio::getFrameJacobian(
-      model_casadi,
-      data_casadi,
-      rsole_idx,
-      pinocchio::ReferenceFrame::WORLD,
-      J_rsole_ca
-    );
-    std::ofstream lsole_jacobian("lsole_jacobian.txt");
-    lsole_jacobian << "lsole_jacobian:\n"<< J_lsole_ca << std::endl;
+    
 
     const auto T_lsole = data_casadi.oMf[lsole_idx];
     const auto T_rsole = data_casadi.oMf[rsole_idx];
-
-    std::ofstream lsole_pose("lsole_pos.txt");
-    lsole_pose << "lsole_pose:\n"<< T_lsole.translation()(2) << std::endl;
-
-    
-
 
     std::cout << "Done extracting foot vel" << std::endl;
 
@@ -809,30 +787,11 @@ for (const auto& joint_name : mujoco_locked_joints) {
     {
       cs_v_lsole(i) = v_lsole_local_world.toVector()[i];
       cs_v_rsole(i) = v_rsole_local_world.toVector()[i];
-      std::cout << "cs_v_lsole(" << i << ") = " << cs_v_lsole(i) << std::endl;
+      //std::cout << "cs_v_lsole(" << i << ") = " << cs_v_lsole(i) << std::endl;
     }
-
-    
     
     SX J_lsole_cs = jacobian(cs_v_lsole, v_k);
     SX J_rsole_cs = jacobian(cs_v_rsole, v_k);
-
-    // SX J_lsole_cs = SX::zeros(6, model_casadi.nv);
-    // SX J_rsole_cs = SX::zeros(6, model_casadi.nv);
-
-    // for (int i = 0; i < 6; ++i)
-    // {
-    //   for (int j = 0; j < model_casadi.nv; ++j)
-    //   {
-    //     //std::cout << "Setting J_lsole_cs(" << i << "," << j << ")" << J_lsole_ca(i,j)<<std::endl;
-    //     J_lsole_cs(i,j) = J_lsole_ca(i,j);
-    //     J_rsole_cs(i,j) = J_rsole_ca(i,j);
-    //     // J_rsole_cs(i,j) = J_rsole_ca(i,j);
-    //     //J_lsole_cs.set(casadi::SX::scalar(J_lsole_ca(i,j)), i, j);
-    //     //J_rsole_cs.set(J_rsole_ca(i,j), i, j);
-    //   }
-    // }
-
 
     std::cout << "Done calculating foot jacobian" << std::endl;
 
@@ -960,43 +919,35 @@ for (const auto& joint_name : mujoco_locked_joints) {
 
   // f_constraint Tangential contact velocity is zero
   // Extract components
-    SX v_linear_l = SX::vertcat({v_lsole_world.linear()[0], 
-                                  v_lsole_world.linear()[1], 
-                                  v_lsole_world.linear()[2]});
-    SX omega_l = SX::vertcat({v_lsole_world.angular()[0], 
-                               v_lsole_world.angular()[1], 
-                               v_lsole_world.angular()[2]});
+    SX v_linear_l = SX::vertcat({v_lsole_local_world.linear()[0], 
+                                  v_lsole_local_world.linear()[1], 
+                                  v_lsole_local_world.linear()[2]});
+    SX omega_l = SX::vertcat({v_lsole_local_world.angular()[0], 
+                               v_lsole_local_world.angular()[1], 
+                               v_lsole_local_world.angular()[2]});
     
-    SX v_linear_r = SX::vertcat({v_rsole_world.linear()[0], 
-                                  v_rsole_world.linear()[1], 
-                                  v_rsole_world.linear()[2]});
-    SX omega_r = SX::vertcat({v_rsole_world.angular()[0], 
-                               v_rsole_world.angular()[1], 
-                               v_rsole_world.angular()[2]});
+    SX v_linear_r = SX::vertcat({v_rsole_local_world.linear()[0], 
+                                  v_rsole_local_world.linear()[1], 
+                                  v_rsole_local_world.linear()[2]});
+    SX omega_r = SX::vertcat({v_rsole_local_world.angular()[0], 
+                               v_rsole_local_world.angular()[1], 
+                               v_rsole_local_world.angular()[2]});
     
 
     
     // Transform contact positions to world frame and compute velocities
-    SX heel_pos_l_world = mtimes(R_lsole, heel_pos_l);
-    SX heel_pos_r_world = mtimes(R_lsole, heel_pos_r);
-    SX toe_pos_l_world = mtimes(R_lsole, toe_pos_l);
-    SX toe_pos_r_world = mtimes(R_lsole, toe_pos_r);
+
     
-    SX v_heel_l_world_l = v_linear_l + SX::cross(omega_l, heel_pos_l_world);
-    SX v_heel_r_world_l = v_linear_l + SX::cross(omega_l, heel_pos_r_world);
-    SX v_toe_l_world_l = v_linear_l + SX::cross(omega_l, toe_pos_l_world);
-    SX v_toe_r_world_l = v_linear_l + SX::cross(omega_l, toe_pos_r_world);
+    SX v_heel_l_world_l = v_linear_l + SX::cross(omega_l, heel_l_w);
+    SX v_heel_r_world_l = v_linear_l + SX::cross(omega_l, heel_r_w);
+    SX v_toe_l_world_l = v_linear_l + SX::cross(omega_l, toe_l_w);
+    SX v_toe_r_world_l = v_linear_l + SX::cross(omega_l, toe_r_w);
     
-    // Same for right foot
-    SX heel_pos_l_world_r = mtimes(R_rsole, heel_pos_l);
-    SX heel_pos_r_world_r = mtimes(R_rsole, heel_pos_r);
-    SX toe_pos_l_world_r = mtimes(R_rsole, toe_pos_l);
-    SX toe_pos_r_world_r = mtimes(R_rsole, toe_pos_r);
     
-    SX v_heel_l_world_r = v_linear_r + SX::cross(omega_r, heel_pos_l_world_r);
-    SX v_heel_r_world_r = v_linear_r + SX::cross(omega_r, heel_pos_r_world_r);
-    SX v_toe_l_world_r = v_linear_r + SX::cross(omega_r, toe_pos_l_world_r);
-    SX v_toe_r_world_r = v_linear_r + SX::cross(omega_r, toe_pos_r_world_r);
+    SX v_heel_l_world_r = v_linear_r + SX::cross(omega_r, heel_l_w_r);
+    SX v_heel_r_world_r = v_linear_r + SX::cross(omega_r, heel_r_w_r);
+    SX v_toe_l_world_r = v_linear_r + SX::cross(omega_r, toe_l_w_r);
+    SX v_toe_r_world_r = v_linear_r + SX::cross(omega_r, toe_r_w_r);
 
     f_tang_contact_vel (Slice (k*num_contact*2*2, (k+1)*num_contact*2*2))
     = SX::vertcat ( { Gam_h_l_k * v_heel_l_world_l(0), Gam_h_l_k * v_heel_l_world_l(1),

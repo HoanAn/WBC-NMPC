@@ -32,15 +32,15 @@ WholeBodyMPCParams WholeBodyMPCParams::getDefaultParams() {
   /// Weight needed
   params.weight_com_xy = 10; // First 2 components of vector q
   params.weight_com_z = 10; // 
-  params.weight_torso = 5; // The next fourth quaternion component of vector q
+  params.weight_torso = 10; // The next fourth quaternion component of vector q
   params.weight_general_qj = 1; // The rest of joint position
 
-  params.weight_general_vb = 0.02; // The first three components of vector v (linear velocity of the base)
-  params.weight_general_omega_b = 0.02; // The next three components of vector v (angular velocity of the base)
-  params.weight_general_v = 0.01; // The rest of joint velocity
+  params.weight_general_vb = 1; // The first three components of vector v (linear velocity of the base)
+  params.weight_general_omega_b = 20; // The next three components of vector v (angular velocity of the base)
+  params.weight_general_v = 1; // The rest of joint velocity
 
   params.weight_contact_force_xy = 0.1; // Contact forces in x and y direction
-  params.weight_contact_force_z = 0.1; // Contact forces in z direction
+  params.weight_contact_force_z = 1; // Contact forces in z direction
 
   params.cmm_selection_matrix_x = 1e-6;
   params.cmm_selection_matrix_y = 1e-6;
@@ -447,7 +447,7 @@ WholeBodyMPC::compute_inverse_dynamics(
 ) {
 
   auto start_time = std::chrono::high_resolution_clock::now();
-  double dt = 0.005;
+  double dt = 0.05;
 
    auto q = robot_state_to_pinocchio_joint_configuration(robot_model_, robot_state);
    //std::cout << "Current q: " << q.transpose() << std::endl;
@@ -457,11 +457,11 @@ WholeBodyMPC::compute_inverse_dynamics(
   // Update for the q0 and v0
   //  guess_vars_.q_sol.head(robot_model.nq) = q;
   //  guess_vars_.v_sol.head(robot_model.nv) = qdot;
-  if(t_msec % 5 == 0){
+  if(t_msec % 10 == 0){
   if (t_msec != 0)
     update_guess(robot_model, robot_data, q, qdot, N_, false);
   
-  if(t_msec == 5){
+  if(t_msec == 10){
     launch_plot_script();
   }
   static std::ofstream State_print ("State.txt");
@@ -578,10 +578,10 @@ WholeBodyMPC::compute_inverse_dynamics(
 
   // The upper part of the inequality constraint must be different from the lower part
   u_g.segment(0*robot_model.nq + 0*robot_model.nv + N_*(robot_model.nq+robot_model.nv+ 2*3* n_contacts_), n_wbnmpc_inequalities_).setConstant(1e3);
-  u_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*n_contacts_) + n_wbnmpc_inequalities_, 2*2*N_).setConstant(0.2);
+  u_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*n_contacts_) + n_wbnmpc_inequalities_, 2*2*N_).setConstant(0.01);
   l_g.segment(N_*(robot_model.nq+robot_model.nv+ 2*3*n_contacts_) + n_wbnmpc_inequalities_, 2*2*N_).setConstant(-0.2);
-  // u_g.tail(16*N_).setConstant(0.1);
-  // l_g.tail(16*N_).setConstant(-0.1);
+  // u_g.tail(16*N_).setConstant(0.01);
+  // l_g.tail(16*N_).setConstant(-0.01);
   //u_g.segment(0, robot_model.nq) = q;
   //u_g.segment(robot_model.nq, robot_model.nv) = qdot;
   //l_g.segment(0, robot_model.nq) = q;
